@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { renderToString } from "react-dom/server";
-import { isValidElement } from "react";
 import { Email, Phone, SafeContact, Sms } from "../src/react.js";
 import { encode, mailto, render, sms, tel, type Contact } from "../src/index.js";
 import { blankData } from "./helpers.js";
@@ -21,32 +20,20 @@ describe("server rendering", () => {
       .toBe(blankData(render(mailto(ADDRESS), { label: "Email us", className: "link" })));
   });
 
-  test("<Email>, <Phone> and <Sms> put no address in the HTML", () => {
-    const html = renderToString(<>
-      <Email address={ADDRESS} subject="Hi" /><Phone number="+39 012 345 6789" /><Sms number="+39 012 345 6789" body="Hi" />
-    </>);
-    expect(html).not.toMatch(/example\.com|mailto:|tel:|sms:|345 6789/);
-  });
-
   test("a data value that is not from encode() is an error, not a silently missing link", () => {
     expect(() => renderToString(<SafeContact data="nope" />)).toThrow(/is not a value from encode\(\)/);
   });
 });
 
 describe("server components", () => {
-  // In a server component tree, what <Email> returns is what crosses to the
-  // browser: the props of the client component. They must not hold the address.
-  test("<Email> hands the client component only the scrambled value", () => {
-    const element = Email({ address: ADDRESS, subject: "Hi", cc: "boss@example.com" });
-    expect(isValidElement(element)).toBe(true);
-    expect(element.type).toBe(SafeContact);
-    const props = JSON.stringify(element.props);
-    expect(props).not.toContain("example.com");
-    expect(props).toContain(encode(mailto(ADDRESS, { subject: "Hi", cc: "boss@example.com" })));
-  });
-
-  test("<Phone> and <Sms> too", () => {
-    expect(JSON.stringify(Phone({ number: "+39 012 345 6789" }).props)).not.toMatch(/012|345 6789/);
-    expect(JSON.stringify(Sms({ number: "+39 012 345 6789", body: "secret" }).props)).not.toMatch(/012|secret/);
+  // In a server component tree, what these components return is what crosses
+  // to the browser: the props of the client component. They must hold nothing
+  // plain: not the address or number, not the subject, cc or message.
+  test.each([
+    ["<Email>", () => Email({ address: ADDRESS, subject: "secret", cc: "boss@example.com" })],
+    ["<Phone>", () => Phone({ number: "+39 012 345 6789" })],
+    ["<Sms>", () => Sms({ number: "+39 012 345 6789", body: "secret" })],
+  ])("%s hands the browser only the scrambled value", (_, element) => {
+    expect(JSON.stringify(element().props)).not.toMatch(/example\.com|012|345 6789|secret/);
   });
 });

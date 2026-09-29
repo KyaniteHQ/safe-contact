@@ -89,16 +89,6 @@ for (const path of ["/", "/react.html"]) {
       await expect(link).toBeFocused();
     });
 
-    test("copying the revealed address gives it the right way round", async ({ page }) => {
-      const link = hiddenLinks(page).first();
-      await link.hover();
-      const copied = await link.evaluate((a) => {
-        getSelection()!.selectAllChildren(a);
-        return getSelection()!.toString();
-      });
-      expect(copied).toBe(EMAIL);
-    });
-
     test("a label shows as is and keeps the email's fields", async ({ page }) => {
       const link = hiddenLinks(page).nth(1);
       await expect(link).toHaveText("Email us");

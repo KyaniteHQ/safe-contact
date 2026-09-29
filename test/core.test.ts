@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { decode, encode, mailto, render, sms, tel } from "../src/index.js";
+import { blankData, dataOf } from "./helpers.js";
 
 const ADDRESS = "hello@example.com";
 const backwards = (text: string) => Array.from(text).reverse().join("");
@@ -61,9 +62,11 @@ describe("encode and decode", () => {
 
 describe("render", () => {
   test("no address in the HTML: a placeholder href, the scrambled value, the text backwards", () => {
-    const html = render(mailto(ADDRESS, { subject: "Hello" }));
-    expect(html).toBe(`<a href="#" data-safe-contact="${encode(mailto(ADDRESS, { subject: "Hello" }))}" ` +
-      `aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">${backwards(ADDRESS)}</bdo></a>`);
+    const contact = mailto(ADDRESS, { subject: "Hello" });
+    const html = render(contact);
+    expect(blankData(html)).toBe(`<a href="#" data-safe-contact="" aria-label="Email address, activate to show">` +
+      `<bdo dir="rtl" aria-hidden="true">${backwards(ADDRESS)}</bdo></a>`);
+    expect(decode(dataOf(html))).toEqual(contact);
     expect(html).not.toContain(ADDRESS);
     expect(html).not.toContain("mailto:");
   });

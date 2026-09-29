@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.png">
+  <img alt="safe-contact by KyaniteLabs. Show your email to people, not to spam bots." src=".github/banner-light.png">
+</picture>
+
 # safe-contact
 
 Show your email address and phone number to people, not to spam bots.

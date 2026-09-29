@@ -1,7 +1,7 @@
 // The README's examples, run as written, so the docs cannot drift from the code.
 import { expect, test } from "vitest";
 import { renderToString } from "react-dom/server";
-import { Email, Phone, SafeContact, Sms } from "../src/react.js";
+import { Email, Phone, Sms } from "../src/react.js";
 import { decode, encode, mailto, render, sms, tel } from "../src/index.js";
 import { dataOf } from "./helpers.js";
 
@@ -21,10 +21,12 @@ test("React with server components", () => {
   expect(html).toContain('class="button"');
 });
 
-test("React, client-side: the --data value in the README is the real one", () => {
+// People paste --data values into their code, so the format cannot change:
+// this value must keep decoding in every future version.
+test("React, client-side: the --data value in the README is real, and stays valid", () => {
   const data = "bW9jLmV0aXNydW95QHVveTpvdGxpYW0KbW9jLmV0aXNydW95QHVveQ==";
   expect(encode(mailto("you@yoursite.com"))).toBe(data);
-  expect(renderToString(<SafeContact data={data} />)).toContain("moc.etisruoy@uoy");
+  expect(decode(data)).toEqual({ text: "you@yoursite.com", href: "mailto:you@yoursite.com" });
 });
 
 test("HTML built by your code", () => {
