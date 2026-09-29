@@ -1,6 +1,6 @@
 {
   "name": "safe-contact",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Show email addresses and phone numbers to people, not to spam bots. The address is never in the page as text until someone hovers, focuses or taps it.",
   "keywords": [
     "email",
