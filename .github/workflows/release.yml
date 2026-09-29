@@ -1,4 +1,5 @@
-# Publishes to npm when a version tag is pushed: `npm version patch && git push --follow-tags`.
+# Publishes to npm and creates a GitHub Release when a version tag is pushed:
+# `npm version patch && git push --follow-tags`.
 # Uses npm trusted publishing (no token): set it up once on npmjs.com under the
 # package's Settings → Trusted publishing, with this repository and release.yml.
 name: Release
@@ -8,14 +9,16 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: read
-  id-token: write
+  contents: write # create the GitHub Release
+  id-token: write # npm trusted publishing
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # tags and history, for the release notes
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -28,3 +31,17 @@ jobs:
       - run: npm run e2e
       # prepublishOnly runs `npm run check` (typecheck, build, unit tests, size).
       - run: npm publish --access public --provenance
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          previous=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          {
+            echo "\`npm install safe-contact@${GITHUB_REF_NAME#v}\`"
+            echo
+            echo "## Changes"
+            echo
+            # Commit subjects since the last release, without npm version's own "x.y.z" commit.
+            git log --no-merges --format='- %s' "${previous:+$previous..}$GITHUB_REF_NAME" | grep -vE '^- [0-9]+\.[0-9]+\.[0-9]+$' || true
+          } > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
