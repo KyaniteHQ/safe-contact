@@ -8,7 +8,7 @@ const cli = (...args: string[]) => spawnSync(process.execPath, ["dist/cli.js", .
 test("prints a hidden email link", () => {
   const { stdout, status } = cli("hello@example.com", "--subject", "Hi");
   expect(status).toBe(0);
-  expect(stdout).toMatch(/^<a data-safe-contact="[^"]+" role="link"/);
+  expect(stdout).toMatch(/^<a href="#" data-safe-contact="[^"]+"/);
   expect(stdout).not.toContain("hello@example.com");
 });
 

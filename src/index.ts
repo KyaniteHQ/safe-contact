@@ -2,7 +2,8 @@
 // bots that harvest them.
 //
 // A hidden link carries its address scrambled in a data-safe-contact
-// attribute, and shows it backwards inside <bdo dir="rtl">, which the browser
+// attribute, has a placeholder href="#" (so browsers and site CSS treat it as a
+// link from the start: underline, pointer, keyboard focus), and shows it backwards inside <bdo dir="rtl">, which the browser
 // draws the right way round. So the page reads normally, yet no
 // "name@domain" text is in it, not in the HTML and not in the DOM after
 // scripts run. The first hover, focus, tap or click turns it into a real
@@ -106,7 +107,7 @@ function render(contact: Contact, hint: string, { label, className }: RenderOpti
   const shown = label === undefined
     ? `<bdo dir="rtl" aria-hidden="true">${escape(reverse(contact.text))}</bdo>`
     : escape(label);
-  return `<a ${ATTRIBUTE}="${encode(contact)}" role="link" tabindex="0"` +
+  return `<a href="#" ${ATTRIBUTE}="${encode(contact)}"` +
     (label === undefined ? ` aria-label="${escape(hint)}"` : "") +
     (className ? ` class="${escape(className)}"` : "") +
     `>${shown}</a>`;
@@ -131,7 +132,7 @@ export function reveal(link: Element): string | null {
   if (data === null) return link.getAttribute("href");
   const contact = decode(data);
   if (!contact) return null;
-  for (const name of [ATTRIBUTE, "role", "tabindex", "aria-label"]) link.removeAttribute(name);
+  for (const name of [ATTRIBUTE, "aria-label"]) link.removeAttribute(name);
   link.querySelector(":scope > bdo[dir=rtl]")?.replaceWith(contact.text);
   link.setAttribute("href", contact.href);
   return contact.href;
@@ -162,8 +163,8 @@ export function listen(doc: Document = document): void {
     const link = hidden(event);
     const href = link && reveal(link);
     if (!href) return;
-    // The link has its href by now, so the browser might follow it too:
-    // cancel that and follow it once, here.
+    // The browser would follow the href the link had when it was clicked
+    // (maybe "#"): cancel that and follow the real one.
     event.preventDefault();
     doc.defaultView?.location.assign(href);
   }, true);

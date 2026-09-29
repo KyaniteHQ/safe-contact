@@ -11,13 +11,13 @@ describe("server rendering", () => {
     const html = renderToString(<Email address={ADDRESS} subject="Hi" className="link" />);
     expect(html).not.toContain(ADDRESS);
     expect(html).not.toContain("mailto:");
-    expect(html).toBe(`<a class="link" data-safe-contact="" role="link" tabindex="0" aria-label="Email address, activate to show">` +
+    expect(html).toBe(`<a class="link" href="#" data-safe-contact="" aria-label="Email address, activate to show">` +
       `<bdo dir="rtl" aria-hidden="true">moc.elpmaxe@olleh</bdo></a>`);
   });
 
   test("a label shows as is, with no hint", () => {
     const html = renderToString(<Email address={ADDRESS}>Email <b>us</b></Email>);
-    expect(html).toBe(`<a data-safe-contact="" role="link" tabindex="0">Email <b>us</b></a>`);
+    expect(html).toBe(`<a href="#" data-safe-contact="">Email <b>us</b></a>`);
   });
 
   test("<Phone> and the sms: form", () => {

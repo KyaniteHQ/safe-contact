@@ -3,8 +3,7 @@
 // component tree (Next.js, React Router) the plain address never reaches the
 // browser: <Email> scrambles it on the server and passes this component the
 // result. Before a person reaches for it, it renders the same markup as
-// renderEmail() (with an empty data-safe-contact, for styling); after, a plain
-// link. React owns every change, so hydration and
+// renderEmail() (with an empty data-safe-contact); after, a plain link. React owns every change, so hydration and
 // re-renders stay consistent.
 
 import { useMemo, useState, type AnchorHTMLAttributes, type ReactNode, type SyntheticEvent } from "react";
@@ -39,7 +38,7 @@ export function SafeContact({
   }
   const show = () => setShown(true);
   return (
-    <a {...rest} data-safe-contact="" role="link" tabIndex={0} aria-label={children == null ? hint : undefined}
+    <a {...rest} href="#" data-safe-contact="" aria-label={children == null ? hint : undefined}
       onPointerEnter={chain(onPointerEnter, show)}
       onPointerDown={chain(onPointerDown, show)}
       onFocus={chain(onFocus, show)}

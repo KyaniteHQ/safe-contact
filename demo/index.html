@@ -51,7 +51,7 @@
     <h2 id="how">How it works</h2>
     <ol>
       <li>The address is written backwards inside <code>&lt;bdo dir="rtl"&gt;</code>. The browser draws it the right way round, so people read it normally, but the page text is backwards.</li>
-      <li>The real link is kept scrambled in a <code>data-safe-contact</code> attribute. No <code>mailto:</code> link, nothing for a bot to follow.</li>
+      <li>The real link is kept scrambled in a <code>data-safe-contact</code> attribute. Its <code>href</code> is just <code>#</code>: no <code>mailto:</code> link for a bot to follow, but it looks and behaves like any other link.</li>
       <li>When someone hovers, focuses, taps or clicks, it becomes a real link, just before the click lands. One click opens the mail app.</li>
     </ol>
     <p>Screen readers hear “Email address, activate to show” until the link is focused. The browser script is under 1&nbsp;KB and needs no CSS.</p>

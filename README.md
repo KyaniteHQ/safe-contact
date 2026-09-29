@@ -64,14 +64,14 @@ and `import "safe-contact/auto"` (or the script tag) in the browser.
 ## How it works
 
 1. The address is written backwards inside `<bdo dir="rtl">`, which the browser draws the right way round. People read it normally; the page text is backwards.
-2. The real link is kept scrambled in a `data-safe-contact` attribute. There is no `mailto:` link for a bot to find or follow.
+2. The real link is kept scrambled in a `data-safe-contact` attribute. Its `href` is just `#`, so there is no `mailto:` link for a bot to find or follow, yet browsers and your CSS treat it as a normal link: same underline, pointer and keyboard focus.
 3. When someone hovers, focuses, taps or clicks, it becomes a real `mailto:`, `tel:` or `sms:` link, just before the click lands.
 
 Before and after, side by side:
 
 ```html
 <!-- what bots see, even after scripts run -->
-<a data-safe-contact="bW9jLmV0aXN…" role="link" tabindex="0" aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">moc.etisruoy@uoy</bdo></a>
+<a href="#" data-safe-contact="bW9jLmV0aXN…" aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">moc.etisruoy@uoy</bdo></a>
 
 <!-- after a person hovers it -->
 <a href="mailto:you@yoursite.com">you@yoursite.com</a>
@@ -79,11 +79,7 @@ Before and after, side by side:
 
 **Accessibility.** Screen readers hear "Email address, activate to show" (change it with `hint`). Focusing or activating the link reveals it, and from then on it is read as a normal link. Keyboard users can tab to it and press Enter.
 
-**Styling.** Until it is revealed the link has no `href`, so CSS that targets `a:link` or `a[href]` will not match it. Add `a[data-safe-contact]` to your link styles:
-
-```css
-a:link, a[data-safe-contact] { color: var(--link); cursor: pointer; }
-```
+**Styling.** Hidden and revealed links are both `<a href>`, so your link styles apply to both. To style hidden ones differently, use `a[data-safe-contact]`.
 
 **Honest limits.** No trick stops a bot that is built to beat it. Most harvesters read raw HTML; some run the page in a headless browser; very few hover over links. This stops all but the last kind. It also works with a strict Content Security Policy (no inline styles or scripts).
 

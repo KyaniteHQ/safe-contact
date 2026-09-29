@@ -41,14 +41,28 @@ for (const path of ["/", "/react.html"]) {
 
     test("hover reveals a real mailto: link with the address", async ({ page }) => {
       const link = hiddenLinks(page).first();
-      await expect(link).not.toHaveAttribute("href");
+      await expect(link).toHaveAttribute("href", "#");
       await expect(link).toHaveAccessibleName("Email address, activate to show");
       await link.hover();
       await expect(link).toHaveAttribute("href", `mailto:${EMAIL}`);
       await expect(link).toHaveText(EMAIL);
       await expect(link).toHaveAccessibleName(EMAIL);
-      await expect(link).not.toHaveAttribute("role");
       await expect(link).not.toHaveAttribute("data-safe-contact");
+    });
+
+    test("before and after, it looks like the page's other links", async ({ page }) => {
+      const link = hiddenLinks(page).first();
+      const look = () => link.evaluate((a) => {
+        const style = getComputedStyle(a);
+        return [style.textDecorationLine, style.cursor, style.color].join(" | ");
+      });
+      const before = await look();
+      // WebKit reports "auto" for every link's cursor and applies the pointer
+      // itself; what matters is that nothing changes on reveal.
+      expect(before).toMatch(/^underline \| (pointer|auto) \|/);
+      await link.hover();
+      await expect(link).toHaveAttribute("href", `mailto:${EMAIL}`);
+      expect(await look()).toBe(before);
     });
 
     test("pressing down reveals it before the click lands", async ({ page }) => {

@@ -62,7 +62,7 @@ describe("renderEmail and renderPhone", () => {
     expect(html).not.toContain("mailto:");
     expect(html).toContain(`<bdo dir="rtl" aria-hidden="true">${reverse(ADDRESS)}</bdo>`);
     expect(html).toContain('aria-label="Email address, activate to show"');
-    expect(html).toMatch(/^<a data-safe-contact="[A-Za-z0-9+/=]+" role="link" tabindex="0"/);
+    expect(html).toMatch(/^<a href="#" data-safe-contact="[A-Za-z0-9+/=]+" aria-label=/);
   });
 
   test("a label replaces the address and the hint; everything is escaped", () => {
