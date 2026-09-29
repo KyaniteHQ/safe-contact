@@ -110,14 +110,14 @@ for (const path of ["/", "/react.html"]) {
 // after the click listeners ran, not the one it had when clicked.
 test("browsers follow the href as it is after the click listeners ran", async ({ page }) => {
   await page.goto("/");
-  const hash = await page.evaluate(() => {
+  await page.evaluate(() => {
     const link = Object.assign(document.createElement("a"), { href: "#" });
     document.body.append(link);
     document.addEventListener("click", () => link.setAttribute("href", "#followed"), { capture: true, once: true });
     link.click();
-    return location.hash;
   });
-  expect(hash).toBe("#followed");
+  // Firefox updates the hash a moment after the click, so wait for it.
+  await expect.poll(() => page.evaluate(() => location.hash)).toBe("#followed");
 });
 
 test("plain HTML: links added after the page loaded are revealed too", async ({ page }) => {
