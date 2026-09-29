@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import { renderToString } from "react-dom/server";
 import { Email, Phone, SafeContact, Sms } from "../src/react.js";
 import { decode, encode, mailto, render, sms, tel } from "../src/index.js";
+import { dataOf } from "./helpers.js";
 
 test("React with server components", () => {
   function ContactPage() {
@@ -33,6 +34,6 @@ test("HTML built by your code", () => {
     render(tel("+1 555 0100")),
     render(sms("+1 555 0100", "Hi!")),
   ];
-  const hrefs = links.map((html) => decode(html.match(/data-safe-contact="([^"]+)"/)![1]!)!.href);
+  const hrefs = links.map((html) => decode(dataOf(html))?.href);
   expect(hrefs).toEqual(["mailto:you@yoursite.com", "mailto:you@yoursite.com?subject=Hello", "tel:+15550100", "sms:+15550100?body=Hi!"]);
 });

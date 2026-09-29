@@ -1,8 +1,7 @@
 // The contact model, shared by every environment: build a Contact with
 // mailto(), tel() or sms(); scramble it with encode() for the page; get it back
-// with decode(). Also the markup rules both renderers follow (the attribute,
-// the backwards text, the screen-reader hint), so the HTML string renderer and
-// the React component cannot drift apart.
+// with decode(). Also hiddenAttributes(), the markup rule both renderers follow,
+// so the HTML string renderer and the React component cannot drift apart.
 
 /** What a link shows and where it goes. Build one with mailto(), tel() or sms(). */
 export interface Contact {
@@ -30,11 +29,7 @@ export function mailto(address: string, fields: MailtoFields = {}): Contact {
   const text = address.trim();
   if (!ADDRESS.test(text)) throw new TypeError(`safe-contact: not an email address: ${JSON.stringify(address)}`);
   const { cc, bcc, subject, body } = fields;
-  const query = Object.entries({ cc, bcc, subject, body })
-    .filter(([, value]) => value?.length)
-    .map(([key, value]) => `${key}=${encodeURIComponent([value].flat().join(","))}`)
-    .join("&");
-  return { text, href: `mailto:${text}${query && `?${query}`}` };
+  return { text, href: withQuery(`mailto:${text}`, { cc, bcc, subject, body }) };
 }
 
 /** A phone contact that calls: `tel("+39 012 345 6789")`. */
@@ -44,7 +39,16 @@ export function tel(number: string): Contact {
 
 /** A phone contact that opens the messaging app: `sms("+39 012 345 6789", "Hi!")`. */
 export function sms(number: string, body?: string): Contact {
-  return { text: number.trim(), href: `sms:${digits(number)}${body ? `?body=${encodeURIComponent(body)}` : ""}` };
+  return { text: number.trim(), href: withQuery(`sms:${digits(number)}`, { body }) };
+}
+
+/** Adds the non-empty fields, in the given order, percent-encoded (spaces as %20, which mail apps show as spaces). */
+function withQuery(base: string, fields: Record<string, string | string[] | undefined>): string {
+  const query = Object.entries(fields)
+    .filter(([, value]) => value?.length)
+    .map(([key, value]) => `${key}=${encodeURIComponent([value].flat().join(","))}`)
+    .join("&");
+  return query ? `${base}?${query}` : base;
 }
 
 function digits(number: string): string {
@@ -55,9 +59,7 @@ function digits(number: string): string {
 
 /** Scrambles a contact into the value of the data-safe-contact attribute. */
 export function encode({ text, href }: Contact): string {
-  let binary = "";
-  for (const byte of new TextEncoder().encode(reverse(`${text}\n${href}`))) binary += String.fromCharCode(byte);
-  return btoa(binary);
+  return btoa(String.fromCharCode(...new TextEncoder().encode(reverse(`${text}\n${href}`))));
 }
 
 /** Unscrambles an attribute value; null if it is not one, or not a mailto:, tel: or sms: link. */
@@ -79,7 +81,15 @@ export function reverse(text: string): string {
   return Array.from(text).reverse().join("");
 }
 
-/** What screen readers hear before a link is revealed, unless you pass your own. */
-export function defaultHint({ href }: Contact): string {
-  return href.startsWith("mailto:") ? "Email address, activate to show" : "Phone number, activate to show";
+/**
+ * The attributes of a link before its reveal, in order: a placeholder href, so
+ * browsers and site CSS treat it as a link; the scrambled contact; and, unless
+ * a label shows instead of the address, what screen readers hear. `data` is
+ * encode(contact) for render(), or "" for React, which reveals the link itself:
+ * the empty value still marks the link for CSS but gives the browser script
+ * nothing to act on.
+ */
+export function hiddenAttributes(contact: Contact, data: string, { hint, labelled }: { hint?: string; labelled: boolean }) {
+  const defaultHint = contact.href.startsWith("mailto:") ? "Email address, activate to show" : "Phone number, activate to show";
+  return { href: "#", [ATTRIBUTE]: data, "aria-label": labelled ? undefined : hint ?? defaultHint };
 }

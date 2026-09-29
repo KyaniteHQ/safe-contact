@@ -25,6 +25,6 @@ jobs:
         run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npm run check
       - run: npm run e2e
+      # prepublishOnly runs `npm run check` (typecheck, build, unit tests, size).
       - run: npm publish --access public --provenance

@@ -20,30 +20,20 @@ export function reveal(link: Element): string | null {
 const listening = new WeakSet<Document>();
 
 /**
- * Reveals hidden links when someone reaches for them: hover, focus or press,
- * which all come before the click, so the click opens the mail or phone app.
- * A click that arrives alone (a screen reader, a script) reveals the link and
- * follows it. Covers links added later too. Calling it again does nothing.
+ * Reveals hidden links when someone reaches for them: hover, focus, press or
+ * click. A click that arrives alone (a screen reader, a script) works too: the
+ * browser follows the href the link has after the click listeners ran, which
+ * is the real one by then. Covers links added later. Calling it again does
+ * nothing.
  */
 export function listen(doc: Document = document): void {
   if (listening.has(doc)) return;
   listening.add(doc);
-  const hiddenLink = (event: Event) =>
-    event.target instanceof Element ? event.target.closest(`a[${ATTRIBUTE}]`) : null;
   const reach = (event: Event) => {
-    const link = hiddenLink(event);
+    const link = event.target instanceof Element ? event.target.closest(`a[${ATTRIBUTE}]`) : null;
     if (link) reveal(link);
   };
-  for (const type of ["pointerover", "pointerdown", "focusin"]) {
+  for (const type of ["pointerover", "pointerdown", "focusin", "click"]) {
     doc.addEventListener(type, reach, { capture: true, passive: true });
   }
-  doc.addEventListener("click", (event) => {
-    const link = hiddenLink(event);
-    const href = link && reveal(link);
-    if (!href) return;
-    // The browser would follow the href the link had when it was clicked
-    // ("#"): cancel that and follow the real one.
-    event.preventDefault();
-    doc.defaultView?.location.assign(href);
-  }, true);
 }

@@ -40,9 +40,13 @@ function main(argv: string[]): number {
   }
   const { values: o, positionals } = parsed;
   const target = positionals.join(" ").trim();
-  if (o.help || !target) {
-    (o.help ? console.log : console.error)(HELP);
-    return o.help ? 0 : 2;
+  if (o.help) {
+    console.log(HELP);
+    return 0;
+  }
+  if (!target) {
+    console.error(HELP);
+    return 2;
   }
   try {
     const contact = target.includes("@") ? mailto(target, { subject: o.subject, body: o.body })
@@ -51,7 +55,7 @@ function main(argv: string[]): number {
     console.log(o.data ? encode(contact) : render(contact, { label: o.label, hint: o.hint, className: o.class }));
     return 0;
   } catch (error) {
-    console.error((error as Error).message.replace(/^safe-contact: /, ""));
+    console.error((error as Error).message);
     return 1;
   }
 }

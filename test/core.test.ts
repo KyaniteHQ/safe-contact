@@ -77,7 +77,7 @@ describe("render", () => {
   test("a label replaces the backwards text and the hint; everything is escaped", () => {
     const html = render(mailto(ADDRESS), { label: `<b>"Email" us</b>`, className: `x" onclick="y` });
     expect(html).toContain(">&#60;b&#62;&#34;Email&#34; us&#60;/b&#62;</a>");
-    expect(html).toContain('class="x&#34; onclick=&#34;y"');
+    expect(html).toMatch(/^<a class="x&#34; onclick=&#34;y" href="#"/);
     expect(html).not.toContain("aria-label");
     expect(html).not.toContain("<bdo");
   });

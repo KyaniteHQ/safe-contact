@@ -3,24 +3,22 @@ import { renderToString } from "react-dom/server";
 import { isValidElement } from "react";
 import { Email, Phone, SafeContact, Sms } from "../src/react.js";
 import { encode, mailto, render, sms, tel, type Contact } from "../src/index.js";
+import { blankData } from "./helpers.js";
 
 const ADDRESS = "hello@example.com";
 
 describe("server rendering", () => {
-  // The React component and render() write the same markup by hand. This keeps
-  // them identical, except that React leaves data-safe-contact empty (React,
-  // not the browser script, owns the reveal).
+  // Both take their attributes from hiddenAttributes() but build the rest of
+  // the markup separately. This keeps them identical, except that React leaves
+  // data-safe-contact empty (React, not the browser script, owns the reveal).
   test.each<[string, Contact]>([["email", mailto(ADDRESS)], ["phone", tel("+39 012 345 6789")], ["sms", sms("+39 012")]])(
     "<SafeContact> renders what render() does (%s)", (_, contact) => {
-      const html = render(contact).replace(/data-safe-contact="[^"]*"/, 'data-safe-contact=""');
-      expect(renderToString(<SafeContact data={encode(contact)} />)).toBe(html);
+      expect(renderToString(<SafeContact data={encode(contact)} />)).toBe(blankData(render(contact)));
     });
 
   test("with a label and a class, too", () => {
-    const html = render(mailto(ADDRESS), { label: "Email us", className: "link" })
-      .replace(/data-safe-contact="[^"]*"/, 'data-safe-contact=""')
-      .replace(/^<a (.*) class="link">/, '<a class="link" $1>');
-    expect(renderToString(<Email address={ADDRESS} className="link">Email us</Email>)).toBe(html);
+    expect(renderToString(<Email address={ADDRESS} className="link">Email us</Email>))
+      .toBe(blankData(render(mailto(ADDRESS), { label: "Email us", className: "link" })));
   });
 
   test("<Email>, <Phone> and <Sms> put no address in the HTML", () => {

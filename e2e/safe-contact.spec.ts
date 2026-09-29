@@ -52,17 +52,12 @@ for (const path of ["/", "/react.html"]) {
 
     test("before and after, it looks like the page's other links", async ({ page }) => {
       const link = hiddenLinks(page).first();
-      const look = () => link.evaluate((a) => {
-        const style = getComputedStyle(a);
-        return [style.textDecorationLine, style.cursor, style.color].join(" | ");
-      });
+      const look = () => link.evaluate((a) => [a.matches(":any-link"), getComputedStyle(a).textDecorationLine, getComputedStyle(a).color]);
       const before = await look();
-      // WebKit reports "auto" for every link's cursor and applies the pointer
-      // itself; what matters is that nothing changes on reveal.
-      expect(before).toMatch(/^underline \| (pointer|auto) \|/);
+      expect(before.slice(0, 2)).toEqual([true, "underline"]);
       await link.hover();
       await expect(link).toHaveAttribute("href", `mailto:${EMAIL}`);
-      expect(await look()).toBe(before);
+      expect(await look()).toEqual(before);
     });
 
     test("pressing down reveals it before the click lands", async ({ page }) => {
@@ -73,6 +68,18 @@ for (const path of ["/", "/react.html"]) {
       await page.mouse.down();
       await expect(link).toHaveAttribute("href", `mailto:${EMAIL}`);
       await page.mouse.up();
+    });
+
+    test("a click with nothing before it (a screen reader, a script) follows the real link", async ({ page }) => {
+      // Recorded by the last click listener, just before the browser follows the href.
+      const followed = await hiddenLinks(page).first().evaluate((a) => new Promise((resolve) => {
+        addEventListener("click", (event) => {
+          resolve([a.getAttribute("href"), event.defaultPrevented]);
+          event.preventDefault(); // don't open a mail app in the test browser
+        }, { once: true });
+        (a as HTMLElement).click();
+      }));
+      expect(followed).toEqual([`mailto:${EMAIL}`, false]);
     });
 
     test("keyboard focus reveals it", async ({ page }) => {
@@ -108,6 +115,20 @@ for (const path of ["/", "/react.html"]) {
     });
   });
 }
+
+// What the click test above relies on: a browser follows the href a link has
+// after the click listeners ran, not the one it had when clicked.
+test("browsers follow the href as it is after the click listeners ran", async ({ page }) => {
+  await page.goto("/");
+  const hash = await page.evaluate(() => {
+    const link = Object.assign(document.createElement("a"), { href: "#" });
+    document.body.append(link);
+    document.addEventListener("click", () => link.setAttribute("href", "#followed"), { capture: true, once: true });
+    link.click();
+    return location.hash;
+  });
+  expect(hash).toBe("#followed");
+});
 
 test("plain HTML: links added after the page loaded are revealed too", async ({ page }) => {
   await page.goto("/");
