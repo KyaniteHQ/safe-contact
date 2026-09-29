@@ -18,9 +18,9 @@ export function App() {
       <section className="try">
         <h2>Try it</h2>
         <dl>
-          <dt>Email</dt><dd><SafeContact data={DATA.email} hint="Email address, activate to show" /></dd>
+          <dt>Email</dt><dd><SafeContact data={DATA.email} /></dd>
           <dt>With a label</dt><dd><SafeContact data={DATA.label}>Email us</SafeContact></dd>
-          <dt>Phone</dt><dd><SafeContact data={DATA.phone} hint="Phone number, activate to show" /></dd>
+          <dt>Phone</dt><dd><SafeContact data={DATA.phone} /></dd>
         </dl>
       </section>
     </main>

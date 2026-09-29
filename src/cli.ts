@@ -3,7 +3,7 @@
 // npx safe-contact "+39 012 345 6789"  → the same for a phone number
 
 import { parseArgs } from "node:util";
-import { emailHref, encode, phoneHref, renderEmail, renderPhone } from "./index.js";
+import { encode, mailto, render, sms, tel } from "./index.js";
 
 const HELP = `Usage: npx safe-contact <email or phone number> [options]
 
@@ -19,7 +19,7 @@ Options:
   --sms             open the messaging app instead of calling
   --hint <text>     what screen readers hear before the link is revealed
   --class <names>   class names for the link
-  --data            print only the scrambled value, for <SafeContact data="...">
+  --data            print only the scrambled value, for React's <SafeContact data="...">
   -h, --help        show this help`;
 
 function main(argv: string[]): number {
@@ -45,14 +45,10 @@ function main(argv: string[]): number {
     return o.help ? 0 : 2;
   }
   try {
-    const render = { label: o.label, hint: o.hint, className: o.class };
-    if (target.includes("@")) {
-      const email = { address: target, subject: o.subject, body: o.body };
-      console.log(o.data ? encode({ text: target, href: emailHref(email) }) : renderEmail({ ...email, ...render }));
-    } else {
-      const phone = { number: target, sms: o.sms, body: o.body };
-      console.log(o.data ? encode({ text: target, href: phoneHref(phone) }) : renderPhone({ ...phone, ...render }));
-    }
+    const contact = target.includes("@") ? mailto(target, { subject: o.subject, body: o.body })
+      : o.sms ? sms(target, o.body)
+      : tel(target);
+    console.log(o.data ? encode(contact) : render(contact, { label: o.label, hint: o.hint, className: o.class }));
     return 0;
   } catch (error) {
     console.error((error as Error).message.replace(/^safe-contact: /, ""));

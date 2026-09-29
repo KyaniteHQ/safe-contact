@@ -1,27 +1,35 @@
-// <Email> and <Phone>. No "use client" here on purpose: in a server component
-// tree they run on the server, scramble the address there and hand the
-// client-side <SafeContact> only the scrambled text. In a client-only app
-// they run in the browser, and the address is in your JavaScript bundle; pass
-// <SafeContact data="..."> from `npx safe-contact --data` to avoid that.
+// <Email>, <Phone> and <Sms>. No "use client" here on purpose: in a server
+// component tree they run on the server, scramble the address there, and hand
+// the client-side <SafeContact> only the scrambled value. In a client-only app
+// they run in the browser, so the address is in your JavaScript bundle; use
+// <SafeContact data="…"> with a value from `npx safe-contact <address> --data`
+// to avoid that.
 
-import { EMAIL_HINT, PHONE_HINT, emailHref, encode, phoneHref, type EmailOptions, type PhoneOptions } from "./index.js";
+import { encode, mailto, sms, tel, type Contact, type MailtoFields } from "./contact.js";
 import { SafeContact, type SafeContactProps } from "./safe-contact.js";
 
-type LinkProps = Omit<SafeContactProps, "data">;
+/** Every <a> prop except href, plus `hint` and `children` (a label shown instead of the address). */
+export type LinkProps = Omit<SafeContactProps, "data">;
 
-export type EmailProps = EmailOptions & LinkProps;
-export type PhoneProps = PhoneOptions & LinkProps;
+export type EmailProps = MailtoFields & LinkProps & { address: string };
+export type PhoneProps = LinkProps & { number: string };
+export type SmsProps = LinkProps & { number: string; body?: string };
 
-/** An email link that spam bots cannot read: `<Email address="hello@example.com" />`. */
-export function Email({ address, subject, body, cc, bcc, hint = EMAIL_HINT, ...link }: EmailProps) {
-  const data = encode({ text: address.trim(), href: emailHref({ address, subject, body, cc, bcc }) });
-  return <SafeContact {...link} hint={hint} data={data} />;
+const link = (contact: Contact, props: LinkProps) => <SafeContact {...props} data={encode(contact)} />;
+
+/** An email link spam bots cannot read: `<Email address="hello@example.com" subject="Hi" />`. */
+export function Email({ address, subject, body, cc, bcc, ...props }: EmailProps) {
+  return link(mailto(address, { subject, body, cc, bcc }), props);
 }
 
-/** A phone link that spam bots cannot read: `<Phone number="+39 012 345 6789" />`. */
-export function Phone({ number, sms, body, hint = PHONE_HINT, ...link }: PhoneProps) {
-  const data = encode({ text: number.trim(), href: phoneHref({ number, sms, body }) });
-  return <SafeContact {...link} hint={hint} data={data} />;
+/** A phone link spam bots cannot read: `<Phone number="+39 012 345 6789" />`. */
+export function Phone({ number, ...props }: PhoneProps) {
+  return link(tel(number), props);
+}
+
+/** A text-message link spam bots cannot read: `<Sms number="+39 012 345 6789" body="Hi!" />`. */
+export function Sms({ number, body, ...props }: SmsProps) {
+  return link(sms(number, body), props);
 }
 
 export { SafeContact, type SafeContactProps };

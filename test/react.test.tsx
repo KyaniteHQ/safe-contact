@@ -1,31 +1,37 @@
 import { describe, expect, test } from "vitest";
 import { renderToString } from "react-dom/server";
 import { isValidElement } from "react";
-import { Email, Phone, SafeContact } from "../src/react.js";
-import { encode } from "../src/index.js";
+import { Email, Phone, SafeContact, Sms } from "../src/react.js";
+import { encode, mailto, render, sms, tel, type Contact } from "../src/index.js";
 
 const ADDRESS = "hello@example.com";
 
 describe("server rendering", () => {
-  test("<Email> renders the same hidden markup as renderEmail(), with no address in it", () => {
-    const html = renderToString(<Email address={ADDRESS} subject="Hi" className="link" />);
-    expect(html).not.toContain(ADDRESS);
-    expect(html).not.toContain("mailto:");
-    expect(html).toBe(`<a class="link" href="#" data-safe-contact="" aria-label="Email address, activate to show">` +
-      `<bdo dir="rtl" aria-hidden="true">moc.elpmaxe@olleh</bdo></a>`);
+  // The React component and render() write the same markup by hand. This keeps
+  // them identical, except that React leaves data-safe-contact empty (React,
+  // not the browser script, owns the reveal).
+  test.each<[string, Contact]>([["email", mailto(ADDRESS)], ["phone", tel("+39 012 345 6789")], ["sms", sms("+39 012")]])(
+    "<SafeContact> renders what render() does (%s)", (_, contact) => {
+      const html = render(contact).replace(/data-safe-contact="[^"]*"/, 'data-safe-contact=""');
+      expect(renderToString(<SafeContact data={encode(contact)} />)).toBe(html);
+    });
+
+  test("with a label and a class, too", () => {
+    const html = render(mailto(ADDRESS), { label: "Email us", className: "link" })
+      .replace(/data-safe-contact="[^"]*"/, 'data-safe-contact=""')
+      .replace(/^<a (.*) class="link">/, '<a class="link" $1>');
+    expect(renderToString(<Email address={ADDRESS} className="link">Email us</Email>)).toBe(html);
   });
 
-  test("a label shows as is, with no hint", () => {
-    const html = renderToString(<Email address={ADDRESS}>Email <b>us</b></Email>);
-    expect(html).toBe(`<a href="#" data-safe-contact="">Email <b>us</b></a>`);
+  test("<Email>, <Phone> and <Sms> put no address in the HTML", () => {
+    const html = renderToString(<>
+      <Email address={ADDRESS} subject="Hi" /><Phone number="+39 012 345 6789" /><Sms number="+39 012 345 6789" body="Hi" />
+    </>);
+    expect(html).not.toMatch(/example\.com|mailto:|tel:|sms:|345 6789/);
   });
 
-  test("<Phone> and the sms: form", () => {
-    expect(renderToString(<Phone number="+39 012 345 6789" sms />)).toContain("9876 543 210 93+");
-  });
-
-  test("an invalid data value renders nothing", () => {
-    expect(renderToString(<SafeContact data="nope" />)).toBe("");
+  test("a data value that is not from encode() is an error, not a silently missing link", () => {
+    expect(() => renderToString(<SafeContact data="nope" />)).toThrow(/is not a value from encode\(\)/);
   });
 });
 
@@ -38,10 +44,11 @@ describe("server components", () => {
     expect(element.type).toBe(SafeContact);
     const props = JSON.stringify(element.props);
     expect(props).not.toContain("example.com");
-    expect(props).toContain(encode({ text: ADDRESS, href: `mailto:${ADDRESS}?cc=boss%40example.com&subject=Hi` }));
+    expect(props).toContain(encode(mailto(ADDRESS, { subject: "Hi", cc: "boss@example.com" })));
   });
 
-  test("<Phone> too", () => {
-    expect(JSON.stringify(Phone({ number: "+39 012 345 6789" }).props)).not.toMatch(/0123|345 6789/);
+  test("<Phone> and <Sms> too", () => {
+    expect(JSON.stringify(Phone({ number: "+39 012 345 6789" }).props)).not.toMatch(/012|345 6789/);
+    expect(JSON.stringify(Sms({ number: "+39 012 345 6789", body: "secret" }).props)).not.toMatch(/012|secret/);
   });
 });

@@ -1,16 +1,16 @@
 "use client";
-// The React link itself. It gets only the scrambled contact, so in a server
-// component tree (Next.js, React Router) the plain address never reaches the
-// browser: <Email> scrambles it on the server and passes this component the
-// result. Before a person reaches for it, it renders the same markup as
-// renderEmail() (with an empty data-safe-contact); after, a plain link. React owns every change, so hydration and
-// re-renders stay consistent.
+// The React link. It gets only the scrambled contact, so in a server component
+// tree (Next.js App Router, React Router) the plain address never reaches the
+// browser: <Email>, <Phone> and <Sms> scramble it on the server and pass this
+// component the result. Hidden, it renders the same markup as render() (with
+// an empty data-safe-contact); once a person reaches for it, a plain link.
+// React owns every change, so hydration and re-renders stay consistent.
 
 import { useMemo, useState, type AnchorHTMLAttributes, type ReactNode, type SyntheticEvent } from "react";
-import { decode, reverse } from "./index.js";
+import { decode, defaultHint, reverse } from "./contact.js";
 
 export interface SafeContactProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
-  /** The scrambled contact, from encode() or `npx safe-contact --data`. */
+  /** The scrambled contact: `encode(mailto("…"))`, or `npx safe-contact <address> --data`. */
   data: string;
   /** Text to show instead of the address, e.g. "Email us". */
   children?: ReactNode;
@@ -25,32 +25,28 @@ function chain<E extends SyntheticEvent>(theirs: ((event: E) => void) | undefine
   };
 }
 
-export function SafeContact({
-  data, children, hint = "Contact link, activate to show",
-  onPointerEnter, onPointerDown, onFocus, onClick, ...rest
-}: SafeContactProps) {
+export function SafeContact({ data, children, hint, onPointerEnter, onPointerDown, onFocus, onClick, ...rest }: SafeContactProps) {
   const [shown, setShown] = useState(false);
   const contact = useMemo(() => decode(data), [data]);
-  if (!contact) return null;
-  if (shown) {
-    return <a {...rest} href={contact.href} onPointerEnter={onPointerEnter} onPointerDown={onPointerDown}
-      onFocus={onFocus} onClick={onClick}>{children ?? contact.text}</a>;
-  }
+  if (!contact) throw new TypeError(`safe-contact: <SafeContact data> is not a value from encode(): ${JSON.stringify(data)}`);
   const show = () => setShown(true);
   return (
-    <a {...rest} href="#" data-safe-contact="" aria-label={children == null ? hint : undefined}
+    <a {...rest}
+      href={shown ? contact.href : "#"}
+      data-safe-contact={shown ? undefined : ""}
+      aria-label={shown || children != null ? undefined : hint ?? defaultHint(contact)}
       onPointerEnter={chain(onPointerEnter, show)}
       onPointerDown={chain(onPointerDown, show)}
       onFocus={chain(onFocus, show)}
       onClick={chain(onClick, (event) => {
-        // A click with no hover, focus or press before it: a screen reader or
-        // a script. Reveal and follow the link.
-        if (event.defaultPrevented) return;
+        // A click with no hover, focus or press before it (a screen reader, a
+        // script) would follow "#": follow the real link instead.
+        if (shown || event.defaultPrevented) return;
         event.preventDefault();
-        setShown(true);
+        show();
         window.location.assign(contact.href);
       })}>
-      {children ?? <bdo dir="rtl" aria-hidden="true">{reverse(contact.text)}</bdo>}
+      {children ?? (shown ? contact.text : <bdo dir="rtl" aria-hidden="true">{reverse(contact.text)}</bdo>)}
     </a>
   );
 }

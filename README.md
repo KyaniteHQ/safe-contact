@@ -2,117 +2,194 @@
 
 Show your email address and phone number to people, not to spam bots.
 
-Bots scrape web pages for addresses and sell them to spammers. `safe-contact` keeps the address out of your page until a person points at it, focuses it or taps it. It looks and works like a normal link: one click opens the mail app.
+Bots scrape web pages for addresses and sell them to spammers. `safe-contact` keeps the address out of your page until a person points at it, focuses it or taps it. It looks and works like a normal link, and one click opens the mail app.
 
-**[Live demo](https://kyanitehq.github.io/safe-contact/)** · under 1 KB · no CSS needed · React, plain HTML or a CLI
+**[Live demo](https://kyanitehq.github.io/safe-contact/)** · 0.6 KB browser script · no CSS · works with a strict Content Security Policy · React, plain HTML or a CLI
 
-## React
+```html
+<!-- What bots see, in the HTML and in the page after scripts run: -->
+<a href="#" data-safe-contact="bW9jLmV0aXNy…" aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">moc.etisruoy@uoy</bdo></a>
+
+<!-- What people see: you@yoursite.com. After they hover it: -->
+<a href="mailto:you@yoursite.com">you@yoursite.com</a>
+```
+
+## Pick your setup
+
+| Your site | Use | Address reaches the browser? |
+|---|---|---|
+| React with server components (Next.js App Router, or another React Server Components framework) | [`<Email>`, `<Phone>`, `<Sms>`](#react-with-server-components) | No |
+| React, client-only (Vite, CRA) or data passed as props from the server (Next.js Pages Router, Remix loaders) | [`<SafeContact data>`](#react-client-side) | No |
+| Any HTML page (static site, WordPress, Webflow, hand-written HTML) | [The CLI and a script tag](#any-html-page) | No |
+| HTML built on a server or at build time (Astro, Eleventy, Express, SvelteKit, Vue SSR) | [`render()` and a script tag](#html-built-by-your-code) | No |
+
+## Install
 
 ```sh
 npm install safe-contact
 ```
 
-```tsx
-import { Email, Phone } from "safe-contact/react";
+## React with server components
 
-<Email address="you@yoursite.com" />
-<Email address="you@yoursite.com" subject="Hello">Email us</Email>
-<Phone number="+1 555 0100" />
-<Phone number="+1 555 0100" sms body="Hi!" />
+Use `<Email>`, `<Phone>` and `<Sms>` in a **server component** (a file without `"use client"`). They scramble the address on the server; only the scrambled value is sent to the browser.
+
+```tsx
+import { Email, Phone, Sms } from "safe-contact/react";
+
+export default function ContactPage() {
+  return (
+    <p>
+      Write to <Email address="you@yoursite.com" />,
+      call <Phone number="+1 555 0100" />,
+      or <Sms number="+1 555 0100" body="Hi!">send a text</Sms>.
+      <Email address="you@yoursite.com" subject="Hello" className="button">Email us</Email>
+    </p>
+  );
+}
 ```
 
-In **Next.js** (App Router) and other React Server Components apps, `<Email>` and `<Phone>` run on the server: the address is scrambled there and never reaches the browser, not in the HTML and not in the JavaScript. Nothing to set up.
+Nothing else to set up: no provider, no script tag, no CSS.
 
-In a **client-only app** (Vite, Create React App), the address is in your JavaScript bundle. Most harvesters only read HTML, so that still stops most of them. To keep it out of the bundle too, scramble it once and pass the result:
+## React, client-side
+
+If the component runs in the browser (a `"use client"` file, a Vite app, or a Next.js Pages Router page), an address written in the code or passed as a prop ends up in your JavaScript or in the page's JSON. Pass a scrambled value instead.
+
+Scramble once, on your machine:
 
 ```sh
 npx safe-contact you@yoursite.com --data
+# bW9jLmV0aXNydW95QHVveTpvdGxpYW0KbW9jLmV0aXNydW95QHVveQ==
 ```
 
 ```tsx
 import { SafeContact } from "safe-contact/react";
 
-<SafeContact data="bW9jLmV0aXN..." />
+<SafeContact data="bW9jLmV0aXNydW95QHVveTpvdGxpYW0KbW9jLmV0aXNydW95QHVveQ==" />
+<SafeContact data="bW9jLmV0aXNydW95…">Email us</SafeContact>
 ```
 
-## Any website
+Or scramble on the server and pass the result as a prop (for example in `getStaticProps` or a loader):
 
-Print the HTML for your address:
+```ts
+import { encode, mailto } from "safe-contact";
+
+export function getStaticProps() {
+  return { props: { contact: encode(mailto("you@yoursite.com")) } }; // never the plain address
+}
+```
+
+## Any HTML page
+
+Print the HTML for your link:
 
 ```sh
 npx safe-contact you@yoursite.com
-npx safe-contact "+1 555 0100"
 npx safe-contact you@yoursite.com --label "Email us" --subject "Hello"
+npx safe-contact "+1 555 0100"
+npx safe-contact "+1 555 0100" --sms --body "Hi!"
 ```
 
-Paste it into your page, and add this once, anywhere on the page:
+Paste the printed `<a …>` where the link should go. Then add this once per page, anywhere:
 
 ```html
 <script src="https://unpkg.com/safe-contact/dist/auto.js" defer></script>
 ```
 
-On a server or at build time (Astro, Eleventy, Express, PHP via Node), use the same functions the CLI uses:
+## HTML built by your code
+
+On the server or at build time, `render()` returns the same HTML the CLI prints:
 
 ```js
-import { renderEmail, renderPhone } from "safe-contact";
+import { render, mailto, tel, sms } from "safe-contact";
 
-renderEmail({ address: "you@yoursite.com", subject: "Hello" }); // → "<a data-safe-contact=…>…</a>"
+render(mailto("you@yoursite.com"));
+render(mailto("you@yoursite.com", { subject: "Hello" }), { label: "Email us" });
+render(tel("+1 555 0100"));
+render(sms("+1 555 0100", "Hi!"));
 ```
 
-and `import "safe-contact/auto"` (or the script tag) in the browser.
+Insert the string as raw HTML (it is already escaped), and load the browser part once per page: the script tag above, or `import "safe-contact/auto";` in your client bundle.
+
+## Rules that keep the address hidden
+
+These matter more than which setup you pick. They are the usual mistakes:
+
+1. **Write the plain address only in server-side code.** Not in a `"use client"` file, not in props that are sent to the browser, not in `getStaticProps` or loader data, not in client-side environment variables.
+2. **Don't leave it anywhere else on the page.** Check the `<title>`, meta tags, JSON-LD (`"email": …`), `alt` text, footer, and `mailto:` links elsewhere. One plain copy defeats the rest.
+3. **Load the browser part once per page when you use `render()` or the CLI.** Without it the links never reveal: they show the address, but clicking only jumps to the top of the page. React components need no script.
+4. **In React, use the components, not the printed HTML.** `<SafeContact data>` gives the same result and handles the reveal inside React.
 
 ## How it works
 
-1. The address is written backwards inside `<bdo dir="rtl">`, which the browser draws the right way round. People read it normally; the page text is backwards.
-2. The real link is kept scrambled in a `data-safe-contact` attribute. Its `href` is just `#`, so there is no `mailto:` link for a bot to find or follow, yet browsers and your CSS treat it as a normal link: same underline, pointer and keyboard focus.
-3. When someone hovers, focuses, taps or clicks, it becomes a real `mailto:`, `tel:` or `sms:` link, just before the click lands.
+1. The address is written backwards inside `<bdo dir="rtl">`, which the browser draws the right way round. People read it normally; the page text is backwards, so pattern-matching bots find no address.
+2. The real link is scrambled in the `data-safe-contact` attribute (the address and link, reversed, then base64). The `href` is `#`, so there's no `mailto:` link to find, yet browsers and your CSS treat it as a normal link.
+3. When someone hovers, focuses, taps or clicks, it becomes a real `mailto:`, `tel:` or `sms:` link just before the click lands. Copying the text copies the real address.
 
-Before and after, side by side:
+**Accessibility.** Screen readers hear "Email address, activate to show" or "Phone number, activate to show" (set your own with `hint`, e.g. for other languages). Keyboard users can tab to the link; focusing it reveals it.
 
-```html
-<!-- what bots see, even after scripts run -->
-<a href="#" data-safe-contact="bW9jLmV0aXN…" aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">moc.etisruoy@uoy</bdo></a>
+**Styling.** Hidden and revealed links are both `<a href>`, so your link styles apply to both. Target hidden ones with `a[data-safe-contact]`.
 
-<!-- after a person hovers it -->
-<a href="mailto:you@yoursite.com">you@yoursite.com</a>
-```
+**Without JavaScript** the address is still shown correctly; clicking it only jumps to the top of the page.
 
-**Accessibility.** Screen readers hear "Email address, activate to show" (change it with `hint`). Focusing or activating the link reveals it, and from then on it is read as a normal link. Keyboard users can tab to it and press Enter.
-
-**Styling.** Hidden and revealed links are both `<a href>`, so your link styles apply to both. To style hidden ones differently, use `a[data-safe-contact]`.
-
-**Honest limits.** No trick stops a bot that is built to beat it. Most harvesters read raw HTML; some run the page in a headless browser; very few hover over links. This stops all but the last kind. It also works with a strict Content Security Policy (no inline styles or scripts).
+**Limits.** No trick stops a bot built to beat it. Most harvesters read raw HTML; some run the page in a headless browser; very few hover over every link. This stops all but the last kind. It hides addresses from harvesters. It does not filter spam or hide an address that is already public elsewhere.
 
 ## API
 
 ### `safe-contact/react`
 
-| Component | Props |
-|---|---|
-| `<Email>` | `address`, `subject?`, `body?`, `cc?`, `bcc?`, `hint?`, `children?` (a label shown instead of the address), and any `<a>` prop except `href` |
-| `<Phone>` | `number`, `sms?`, `body?` (for sms), `hint?`, `children?`, and any `<a>` prop except `href` |
-| `<SafeContact>` | `data` (from `encode()` or `npx safe-contact --data`), `hint?`, `children?`, and any `<a>` prop except `href` |
+```ts
+<Email address: string subject?: string body?: string cc?: string | string[] bcc?: string | string[] {...LinkProps} />
+<Phone number: string {...LinkProps} />
+<Sms number: string body?: string {...LinkProps} />
+<SafeContact data: string {...LinkProps} />   // data from encode() or `npx safe-contact <address> --data`
+
+LinkProps = every <a> prop except href, plus:
+  children?: ReactNode   // shown instead of the address, e.g. "Email us"
+  hint?: string          // what screen readers hear before the reveal
+```
+
+`<Email>`, `<Phone>` and `<Sms>` throw a `TypeError` for an invalid address or number. `<SafeContact>` throws one for a `data` value that did not come from `encode()`.
 
 ### `safe-contact`
 
-| Function | Does |
-|---|---|
-| `renderEmail(options)`, `renderPhone(options)` | The HTML of a hidden link. Options as above, plus `label`, `hint`, `className`. |
-| `listen(document?)` | Reveals hidden links when a person reaches for them. Covers links added later. `safe-contact/auto` calls it for you. |
-| `reveal(element)` | Reveals one link now. |
-| `encode({ text, href })`, `decode(data)` | Scramble and unscramble a `data-safe-contact` value. `decode` only accepts `mailto:`, `tel:` and `sms:` links. |
-| `emailHref(options)`, `phoneHref(options)` | Build the `mailto:`, `tel:` or `sms:` address. |
+```ts
+mailto(address: string, fields?: { subject?, body?, cc?, bcc? }): Contact   // throws TypeError if not an address
+tel(number: string): Contact                                              // throws TypeError if under 3 digits
+sms(number: string, body?: string): Contact
+
+render(contact: Contact, options?: { label?: string; hint?: string; className?: string }): string
+encode(contact: Contact): string             // the value for <SafeContact data> and data-safe-contact
+decode(data: string): Contact | null         // null unless it is a mailto:, tel: or sms: contact
+
+listen(document?: Document): void            // browser: reveal hidden links on hover, focus, press or click; safe to call twice
+reveal(link: Element): string | null         // browser: reveal one link now; returns its real href
+
+type Contact = { text: string; href: string } // text: what the link shows; href: the mailto:/tel:/sms: URL
+```
+
+### `safe-contact/auto`
+
+The browser script: calls `listen()`. Use it as `<script src="https://unpkg.com/safe-contact/dist/auto.js" defer>` or `import "safe-contact/auto"`.
 
 ### CLI
 
 ```
-npx safe-contact <email or phone number> [--label text] [--subject text] [--body text]
-                 [--sms] [--hint text] [--class names] [--data]
+npx safe-contact <email or phone number> [options]
+
+  --label <text>    show this text instead of the address, e.g. "Email us"
+  --subject <text>  email subject
+  --body <text>     email body, or the message with --sms
+  --sms             a text-message link instead of a call link (phone numbers only)
+  --hint <text>     what screen readers hear before the reveal
+  --class <names>   class names for the link
+  --data            print only the scrambled value, for <SafeContact data>
 ```
 
-## Browser support
+A value containing `@` is treated as an email address; anything else as a phone number.
 
-Every current browser. Tested in Chromium, Firefox and WebKit on every change.
+## Compatibility
+
+Every current browser; tested in Chromium, Firefox and WebKit on every change. React 18 and 19. Node 18 or later for the CLI and `render()`.
 
 ## License
 

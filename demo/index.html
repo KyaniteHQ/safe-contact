@@ -34,11 +34,12 @@
     <pre><code>npm install safe-contact</code></pre>
 
     <h3>React</h3>
-    <pre><code>import { Email, Phone } from "safe-contact/react";
+    <pre><code>import { Email, Phone, Sms } from "safe-contact/react";
 
 &lt;Email address="you&#64;yoursite.com" /&gt;
 &lt;Email address="you&#64;yoursite.com" subject="Hello"&gt;Email us&lt;/Email&gt;
-&lt;Phone number="+1 555 0100" /&gt;</code></pre>
+&lt;Phone number="+1 555 0100" /&gt;
+&lt;Sms number="+1 555 0100" body="Hi!" /&gt;</code></pre>
     <p>In Next.js and other server-component apps, the address is scrambled on the server and never reaches the browser. Nothing to set up.</p>
 
     <h3>Any website</h3>
