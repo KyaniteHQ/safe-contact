@@ -1,0 +1,82 @@
+{
+  "name": "safe-contact",
+  "version": "0.1.0",
+  "description": "Show email addresses and phone numbers to people, not to spam bots. The address is never in the page as text until someone hovers, focuses or taps it.",
+  "keywords": [
+    "email",
+    "obfuscate",
+    "obfuscation",
+    "spam",
+    "harvest",
+    "scraper",
+    "mailto",
+    "tel",
+    "phone",
+    "react",
+    "contact"
+  ],
+  "license": "MIT",
+  "author": "KyaniteHQ",
+  "homepage": "https://kyanitehq.github.io/safe-contact/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KyaniteHQ/safe-contact.git"
+  },
+  "bugs": "https://github.com/KyaniteHQ/safe-contact/issues",
+  "type": "module",
+  "sideEffects": [
+    "./dist/auto.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./auto": "./dist/auto.js",
+    "./package.json": "./package.json"
+  },
+  "unpkg": "./dist/auto.js",
+  "jsdelivr": "./dist/auto.js",
+  "bin": {
+    "safe-contact": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/bundle.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "size": "node scripts/size.js",
+    "demo": "npm run build && node scripts/demo.js",
+    "e2e": "npm run demo && playwright test",
+    "check": "npm run typecheck && npm run build && npm test && npm run size",
+    "prepublishOnly": "npm run check"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

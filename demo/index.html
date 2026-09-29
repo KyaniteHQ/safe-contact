@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>safe-contact · show your email to people, not to spam bots</title>
+<meta name="description" content="A tiny library that keeps email addresses and phone numbers out of your page's HTML until a person reaches for them. React, plain HTML, or a CLI.">
+<link rel="stylesheet" href="style.css">
+<script src="auto.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <p class="name">safe-contact</p>
+    <h1>Show your email to people, not to spam bots.</h1>
+    <p class="lede">Bots scrape pages for addresses and sell them to spammers. safe-contact keeps the address out of your page until a person points at it, focuses it or taps it. It looks and works like a normal link.</p>
+    <p class="links"><a href="https://github.com/KyaniteHQ/safe-contact">GitHub</a> · <a href="https://www.npmjs.com/package/safe-contact">npm</a> · <a href="react.html">React demo</a></p>
+  </header>
+
+  <section class="try" aria-labelledby="try">
+    <h2 id="try">Try it</h2>
+    <dl>
+      <dt>Email</dt><dd><!--email--></dd>
+      <dt>With a label</dt><dd><!--label--></dd>
+      <dt>Phone</dt><dd><!--phone--></dd>
+      <dt>Text message</dt><dd><!--sms--></dd>
+    </dl>
+    <p class="status" aria-live="polite">Hidden links on this page: <strong id="count">4</strong>. Hover one and watch it drop.</p>
+    <p class="proof">Now open View Source (<kbd>Ctrl</kbd>+<kbd>U</kbd>, or <kbd>⌘</kbd><kbd>⌥</kbd><kbd>U</kbd> on a Mac) and search for <code>&#64;example</code>. It isn't there. Neither is the phone number.</p>
+  </section>
+
+  <section aria-labelledby="use">
+    <h2 id="use">Use it</h2>
+    <pre><code>npm install safe-contact</code></pre>
+
+    <h3>React</h3>
+    <pre><code>import { Email, Phone } from "safe-contact/react";
+
+&lt;Email address="you&#64;yoursite.com" /&gt;
+&lt;Email address="you&#64;yoursite.com" subject="Hello"&gt;Email us&lt;/Email&gt;
+&lt;Phone number="+1 555 0100" /&gt;</code></pre>
+    <p>In Next.js and other server-component apps, the address is scrambled on the server and never reaches the browser. Nothing to set up.</p>
+
+    <h3>Any website</h3>
+    <pre><code>npx safe-contact you&#64;yoursite.com</code></pre>
+    <p>Paste the HTML it prints, and add this once per page:</p>
+    <pre><code>&lt;script src="https://unpkg.com/safe-contact/dist/auto.js" defer&gt;&lt;/script&gt;</code></pre>
+  </section>
+
+  <section aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+    <ol>
+      <li>The address is written backwards inside <code>&lt;bdo dir="rtl"&gt;</code>. The browser draws it the right way round, so people read it normally, but the page text is backwards.</li>
+      <li>The real link is kept scrambled in a <code>data-safe-contact</code> attribute. No <code>mailto:</code> link, nothing for a bot to follow.</li>
+      <li>When someone hovers, focuses, taps or clicks, it becomes a real link, just before the click lands. One click opens the mail app.</li>
+    </ol>
+    <p>Screen readers hear “Email address, activate to show” until the link is focused. The browser script is under 1&nbsp;KB and needs no CSS.</p>
+    <p class="note">No trick stops a bot that is built to beat it. Most harvesters just read the HTML, some run the page in a browser, and very few hover over links. This stops all but the last kind.</p>
+  </section>
+</main>
+<footer><p>MIT licence · made by <a href="https://github.com/KyaniteHQ">KyaniteHQ</a></p></footer>
+<script src="count.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --text: #1b2330; --muted: #5a6474; --line: #dde2ea;
+  --accent: #1f5fbf; --accent-soft: #e6eefb; --code: #eef1f5;
+  color-scheme: light;
+  font: 17px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b; --card: #161d27; --text: #e4e9f0; --muted: #9aa5b5; --line: #2a3442;
+    --accent: #7fb0ff; --accent-soft: #1c2a40; --code: #1b2330;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); padding-inline: 20px; }
+main, footer { max-width: 44rem; margin: 0 auto; }
+main { padding-block: 64px 24px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+.name { font: 600 0.95rem/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); margin: 0 0 16px; letter-spacing: 0.02em; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 20px; text-wrap: balance; }
+h2 { font-size: 1.35rem; margin: 56px 0 16px; letter-spacing: -0.01em; }
+h3 { font-size: 1.02rem; margin: 28px 0 8px; }
+.lede { font-size: 1.12rem; color: var(--muted); margin: 0 0 16px; }
+.links { margin: 0; color: var(--muted); }
+.try { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 24px 20px; margin-top: 40px; }
+.try h2 { margin-top: 20px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 24px; margin: 0 0 20px; font-size: 1.1rem; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+.status { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; margin: 0 0 12px; }
+.proof, .note { color: var(--muted); margin: 0; }
+.note { margin-top: 16px; font-size: 0.95rem; }
+pre { background: var(--code); border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 0 0 12px; }
+code, kbd { font: 0.9em/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+:not(pre) > code { background: var(--code); border-radius: 5px; padding: 1px 5px; }
+kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--card); }
+ol { padding-left: 1.3em; }
+li { margin-bottom: 8px; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; padding-block: 16px 40px; }
+@media (max-width: 480px) { dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } .try { padding-inline: 16px; } }
