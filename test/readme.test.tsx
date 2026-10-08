@@ -3,7 +3,15 @@ import { expect, test } from "vitest";
 import { renderToString } from "react-dom/server";
 import { Email, Phone, Sms } from "../src/react.js";
 import { decode, encode, mailto, render, sms, tel } from "../src/index.js";
+import { decoy } from "../src/contact.js";
 import { dataOf } from "./helpers.js";
+
+test("what bots see: the HTML at the top of the README", () => {
+  expect(render(mailto("you@yoursite.com"))).toBe(
+    `<a href="#" data-safe-contact="bW9jLmV0aXNydW95QHVveTpvdGxpYW0KbW9jLmV0aXNydW95QHVveQ==" aria-label="Email address, activate to show">` +
+    `<span aria-hidden="true">uho@puweher.mifi</span></a>`);
+  expect(decoy(mailto("you@yoursite.com"))).toBe("uho@puweher.mifi");
+});
 
 test("React with server components", () => {
   function ContactPage() {

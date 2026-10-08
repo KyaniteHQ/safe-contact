@@ -8,7 +8,7 @@
 
 import { useMemo, useState, type AnchorHTMLAttributes, type ReactNode, type SyntheticEvent } from "react";
 import { flushSync } from "react-dom";
-import { decode, hiddenAttributes, reverse } from "./contact.js";
+import { decode, decoy, hiddenAttributes } from "./contact.js";
 
 export interface SafeContactProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   /** The scrambled contact: `encode(mailto("…"))`, or `npx safe-contact <address> --data`. */
@@ -40,7 +40,7 @@ export function SafeContact({ data, children, hint, onPointerEnter, onPointerDow
       // A click with nothing before it (a screen reader, a script): reveal now,
       // before the browser reads the href to follow.
       onClick={chain(onClick, () => shown || flushSync(show))}>
-      {children ?? (shown ? contact.text : <bdo dir="rtl" aria-hidden="true">{reverse(contact.text)}</bdo>)}
+      {children ?? (shown ? contact.text : <span aria-hidden="true">{decoy(contact)}</span>)}
     </a>
   );
 }

@@ -7,15 +7,15 @@
 
 Show your email address and phone number to people, not to spam bots.
 
-Bots scrape web pages for addresses and sell them to spammers. `safe-contact` keeps the address out of your page until a person points at it, focuses it or taps it. It looks and works like a normal link, and one click opens the mail app.
+Bots scrape web pages for addresses and sell them to spammers. `safe-contact` keeps the address out of your page until a person points at it, focuses it or taps it. In its place the page holds a made-up address that cannot be delivered, so a bot that takes it gets junk. The link looks and works like a normal link, and one click opens the mail app.
 
 **[Live demo](https://kyanitehq.github.io/safe-contact/)** · 0.6 KB browser script · no CSS · works with a strict Content Security Policy · React, plain HTML or a CLI
 
 ```html
-<!-- What bots see, in the HTML and in the page after scripts run: -->
-<a href="#" data-safe-contact="bW9jLmV0aXNy…" aria-label="Email address, activate to show"><bdo dir="rtl" aria-hidden="true">moc.etisruoy@uoy</bdo></a>
+<!-- What bots see, in the HTML and in the page after scripts run: a made-up address -->
+<a href="#" data-safe-contact="bW9jLmV0aXNy…" aria-label="Email address, activate to show"><span aria-hidden="true">uho@puweher.mifi</span></a>
 
-<!-- What people see: you@yoursite.com. After they hover it: -->
+<!-- What people see after they hover, focus or tap it: -->
 <a href="mailto:you@yoursite.com">you@yoursite.com</a>
 ```
 
@@ -126,17 +126,19 @@ These matter more than which setup you pick. They are the usual mistakes:
 
 ## How it works
 
-1. The address is written backwards inside `<bdo dir="rtl">`, which the browser draws the right way round. People read it normally; the page text is backwards, so pattern-matching bots find no address.
+1. The page holds a decoy in place of the address: a made-up user name, domain and top-level domain (`uho@puweher.mifi`) that reads like an address but cannot be delivered. For a phone number it is random digits after `+0`, a country code that does not exist. A bot that harvests the page gets junk; nothing in the page gives the real address away.
 2. The real link is scrambled in the `data-safe-contact` attribute (the address and link, reversed, then base64). The `href` is `#`, so there's no `mailto:` link to find, yet browsers and your CSS treat it as a normal link.
-3. When someone hovers, focuses, taps or clicks, it becomes a real `mailto:`, `tel:` or `sms:` link just before the click lands. Copying the text copies the real address.
+3. When someone hovers, focuses, taps or clicks, the decoy becomes the real address and the link a real `mailto:`, `tel:` or `sms:` link, just before the click lands. Copying the text copies the real address.
+
+The decoy is derived from the address, so the same address always gets the same decoy (server and client render alike, builds stay reproducible), and it is as long as the real text, so nothing moves on reveal. Until someone reaches for the link they see the decoy, so people who only read, print or screenshot the page do not see the address.
 
 **Accessibility.** Screen readers hear "Email address, activate to show" or "Phone number, activate to show" (set your own with `hint`, e.g. for other languages). Keyboard users can tab to the link; focusing it reveals it.
 
 **Styling.** Hidden and revealed links are both `<a href>`, so your link styles apply to both. Target hidden ones with `a[data-safe-contact]`.
 
-**Without JavaScript** the address is still shown correctly; clicking it only jumps to the top of the page.
+**Without JavaScript** the decoy stays, and clicking it only jumps to the top of the page.
 
-**Limits.** No trick stops a bot built to beat it. Most harvesters read raw HTML; some run the page in a headless browser; very few hover over every link. This stops all but the last kind. It hides addresses from harvesters. It does not filter spam or hide an address that is already public elsewhere.
+**Limits.** No trick stops a bot built to beat it. Most harvesters read raw HTML; some run the page in a headless browser; very few hover over every link. This stops all but the last kind, and the first two kinds take home a decoy. It hides addresses from harvesters. It does not filter spam or hide an address that is already public elsewhere.
 
 ## API
 

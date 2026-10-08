@@ -12,7 +12,8 @@ export function reveal(link: Element): string | null {
   if (!contact) return null;
   link.removeAttribute(ATTRIBUTE);
   link.removeAttribute("aria-label");
-  link.querySelector(":scope > bdo[dir=rtl]")?.replaceWith(contact.text);
+  // The decoy; or, in HTML made by 0.1, the address written backwards.
+  link.querySelector(":scope > [aria-hidden]")?.replaceWith(contact.text);
   link.setAttribute("href", contact.href);
   return contact.href;
 }

@@ -18,25 +18,19 @@ for (const path of ["/", "/react.html"]) {
       const scripts = await page.locator("script[src]").evaluateAll((els) => els.map((el) => (el as HTMLScriptElement).src));
       const sources = [html, ...(await Promise.all(scripts.map(async (src) => (await request.get(src)).text())))];
       const rendered = [await page.content(), await page.locator("body").innerText()];
-      // The backwards text (moc.elpmaxe@olleh) is meant to be there.
+      // The decoys (a made-up address and a +0 number) are meant to be there.
       for (const text of [...sources, ...rendered]) {
         expect(text).not.toMatch(/example\.com|mailto:hello|tel:\+39|sms:\+39/);
         expect(text).not.toMatch(/345 ?6789|0123456789/);
       }
     });
 
-    test("the backwards text is drawn the right way round", async ({ page }) => {
-      const positions = await page.locator("main dd bdo").first().evaluate((bdo) => {
-        const text = bdo.firstChild!;
-        return Array.from({ length: text.textContent!.length }, (_, i) => {
-          const range = document.createRange();
-          range.setStart(text, i);
-          range.setEnd(text, i + 1);
-          return range.getBoundingClientRect().left;
-        });
-      });
-      // The last character in the page text is drawn first, on the left.
-      for (let i = 1; i < positions.length; i++) expect(positions[i]).toBeLessThan(positions[i - 1]!);
+    test("until the reveal, the links show a made-up address and a made-up number", async ({ page }) => {
+      const email = await hiddenLinks(page).first().innerText();
+      expect(email).toMatch(/^[a-z0-9._-]+@[a-z-]+\.[a-z]{4,6}$/);
+      expect(email).not.toBe(EMAIL);
+      expect(email.length).toBe(EMAIL.length);
+      expect(await hiddenLinks(page).nth(2).innerText()).toMatch(/^\+0\d \d{3} \d{3} \d{4}$/);
     });
 
     test("hover reveals a real mailto: link with the address", async ({ page }) => {

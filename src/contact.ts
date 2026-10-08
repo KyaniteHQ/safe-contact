@@ -1,7 +1,8 @@
 // The contact model, shared by every environment: build a Contact with
 // mailto(), tel() or sms(); scramble it with encode() for the page; get it back
-// with decode(). Also hiddenAttributes(), the markup rule both renderers follow,
-// so the HTML string renderer and the React component cannot drift apart.
+// with decode(). Also the two markup rules both renderers follow, so the HTML
+// string renderer and the React component cannot drift apart: hiddenAttributes()
+// and decoy(), the made-up address the page shows until the reveal.
 
 /** What a link shows and where it goes. Build one with mailto(), tel() or sms(). */
 export interface Contact {
@@ -77,8 +78,96 @@ export function decode(data: string): Contact | null {
 }
 
 /** Reverses a string by code point, so emoji and accents survive. */
-export function reverse(text: string): string {
+function reverse(text: string): string {
   return Array.from(text).reverse().join("");
+}
+
+/**
+ * What the page shows in place of the contact until the reveal: a made-up
+ * address or number that reads like one but cannot be delivered. A harvester
+ * that takes it gets junk. For an email it is a random user name (one or two
+ * parts, sometimes digits), a random domain and a made-up top-level domain; for
+ * a phone number, random digits after "+0", a country code that does not exist.
+ *
+ * It is derived from the contact, so the same contact always gets the same
+ * decoy: server and client render alike, and builds are reproducible. It has
+ * the length of the real text, so nothing moves when the link is revealed.
+ */
+export function decoy({ text, href }: Contact): string {
+  const next = random(seed(`${text}\n${href}`));
+  return href.startsWith("mailto:") ? fakeAddress(text, next) : fakeNumber(text, next);
+}
+
+const CONSONANTS = "bcdfghjklmnprstvwz";
+const VOWELS = "aeiou";
+
+type Next = () => number;
+
+const between = (next: Next, min: number, max: number) => min + Math.floor(next() * (max - min + 1));
+const pick = (next: Next, from: string) => from[between(next, 0, from.length - 1)]!;
+const digit = (next: Next) => String(between(next, 0, 9));
+const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
+
+/** Pronounceable: consonants and vowels in turn, e.g. "kovari" or "abeno". */
+function word(length: number, next: Next): string {
+  let vowel = next() < 0.5;
+  let out = "";
+  for (let i = 0; i < length; i++, vowel = !vowel) out += pick(next, vowel ? VOWELS : CONSONANTS);
+  return out;
+}
+
+/** Two words joined by `separator`, each at least `min` letters long, the first at most 8. */
+function pair(length: number, min: number, separator: string, next: Next): string {
+  const first = between(next, min, Math.min(8, length - min - 1));
+  return `${word(first, next)}${separator}${word(length - first - 1, next)}`;
+}
+
+/** e.g. "ren.olav42@sivome.kuzda", as long as the real address. */
+function fakeAddress(address: string, next: Next): string {
+  const at = address.indexOf("@");
+  const user = fakeUser(at < 0 ? address.length : at, next);
+  const domain = fakeDomain(at < 0 ? 0 : address.length - at - 1, next);
+  return `${user}@${domain}`;
+}
+
+function fakeUser(length: number, next: Next): string {
+  length = clamp(length, 2, 40);
+  const digits = length >= 5 && next() < 0.4 ? between(next, 1, 2) : 0;
+  const letters = length - digits;
+  let user = letters >= 9 || (letters >= 6 && next() < 0.5) ? pair(letters, 2, pick(next, "._-"), next) : word(letters, next);
+  for (let i = 0; i < digits; i++) user += digit(next);
+  return user;
+}
+
+/** A name and a top-level domain of 4 to 6 letters: long enough to be nobody's. */
+function fakeDomain(length: number, next: Next): string {
+  length = clamp(length, 8, 60);
+  const tld = between(next, 4, Math.min(6, length - 4));
+  const name = length - tld - 1;
+  return `${name >= 11 || (name >= 8 && next() < 0.5) ? pair(name, 3, "-", next) : word(name, next)}.${word(tld, next)}`;
+}
+
+/** The number as written, every digit random, after "+0": no country code starts with 0. */
+function fakeNumber(number: string, next: Next): string {
+  let first = true;
+  return `+${number.replace(/^\+/, "").replace(/\d/g, () => (first ? ((first = false), "0") : digit(next)))}`;
+}
+
+/** FNV-1a, a 32-bit hash of the text. */
+function seed(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
+  return hash >>> 0;
+}
+
+/** mulberry32: numbers in [0, 1) that are the same for the same seed everywhere. */
+function random(state: number): Next {
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), state | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 /**

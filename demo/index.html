@@ -26,7 +26,7 @@
       <dt>Text message</dt><dd><!--sms--></dd>
     </dl>
     <p class="status" aria-live="polite">Hidden links on this page: <strong id="count"></strong>. Hover one and watch it drop.</p>
-    <p class="proof">Now open View Source (<kbd>Ctrl</kbd>+<kbd>U</kbd>, or <kbd>⌘</kbd><kbd>⌥</kbd><kbd>U</kbd> on a Mac) and search for <code>&#64;example</code><!-- an entity, so this instruction is not itself a match -->. It isn't there. Neither is the phone number.</p>
+    <p class="proof">Now open View Source (<kbd>Ctrl</kbd>+<kbd>U</kbd>, or <kbd>⌘</kbd><kbd>⌥</kbd><kbd>U</kbd> on a Mac) and search for <code>&#64;example</code><!-- an entity, so this instruction is not itself a match -->. It isn't there. Neither is the phone number. What is there is a made-up address that goes nowhere.</p>
   </section>
 
   <section aria-labelledby="use">
@@ -51,9 +51,9 @@
   <section aria-labelledby="how">
     <h2 id="how">How it works</h2>
     <ol>
-      <li>The address is written backwards inside <code>&lt;bdo dir="rtl"&gt;</code>. The browser draws it the right way round, so people read it normally, but the page text is backwards.</li>
+      <li>The page holds a decoy in place of the address: a made-up user name, domain and top-level domain that reads like an address but cannot be delivered. For a phone number it is random digits after <code>+0</code>, a country code that does not exist. A bot that harvests the page gets junk.</li>
       <li>The real link is kept scrambled in a <code>data-safe-contact</code> attribute. Its <code>href</code> is just <code>#</code>: no <code>mailto:</code> link for a bot to follow, but it looks and behaves like any other link.</li>
-      <li>When someone hovers, focuses, taps or clicks, it becomes a real link, just before the click lands. One click opens the mail app.</li>
+      <li>When someone hovers, focuses, taps or clicks, the decoy becomes the real address and the link a real one, just before the click lands. One click opens the mail app.</li>
     </ol>
     <p>Screen readers hear “Email address, activate to show” until the link is focused. The browser script is under 1&nbsp;KB and needs no CSS.</p>
     <p class="note">No trick stops a bot that is built to beat it. Most harvesters just read the HTML, some run the page in a browser, and very few hover over links. This stops all but the last kind.</p>

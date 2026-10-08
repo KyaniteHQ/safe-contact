@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { decode, encode, mailto, render, sms, tel } from "../src/index.js";
+import { decoy } from "../src/contact.js";
 import { blankData, dataOf } from "./helpers.js";
 
 const ADDRESS = "hello@example.com";
@@ -60,28 +61,61 @@ describe("encode and decode", () => {
   });
 });
 
+describe("decoy", () => {
+  // A made-up address that reads like one: user@name.tld, letters, digits and
+  // one of . _ - in the user part, a hyphen at most in the name, a top-level
+  // domain of 4 to 6 letters that is nobody's.
+  const FAKE_ADDRESS = /^[a-z0-9]+(?:[._-][a-z0-9]+)?@[a-z]+(?:-[a-z]+)?\.[a-z]{4,6}$/;
+
+  test("an email decoy looks like an address, is not the real one, and is as long as it", () => {
+    for (const address of [ADDRESS, "a@b.co", "first.last@sub.company-name.co.uk", "jean-pierre_dupont99@universite-paris.fr"]) {
+      const fake = decoy(mailto(address));
+      expect(fake, address).toMatch(FAKE_ADDRESS);
+      expect(fake, address).not.toBe(address);
+      expect(fake.split("@")[0], address).not.toBe(address.split("@")[0]);
+      expect(fake.split("@")[1], address).not.toBe(address.split("@")[1]);
+      if (address.split("@")[1]!.length >= 8) expect(fake.length, address).toBe(address.length);
+    }
+  });
+
+  test("a phone decoy keeps the shape and has random digits after +0, a country code nobody has", () => {
+    expect(decoy(tel("+39 012 345 6789"))).toMatch(/^\+0\d \d{3} \d{3} \d{4}$/);
+    expect(decoy(tel("+39 012 345 6789"))).not.toBe("+39 012 345 6789");
+    expect(decoy(sms("0123 456", "Hi"))).toMatch(/^\+0\d{3} \d{3}$/);
+  });
+
+  test("the same contact always gets the same decoy; different contacts get different ones", () => {
+    expect(decoy(mailto(ADDRESS))).toBe(decoy(mailto(ADDRESS)));
+    expect(decoy(mailto(ADDRESS))).not.toBe(decoy(mailto("hallo@example.com")));
+    expect(decoy(mailto(ADDRESS))).not.toBe(decoy(mailto(ADDRESS, { subject: "Hi" })));
+  });
+});
+
 describe("render", () => {
-  test("no address in the HTML: a placeholder href, the scrambled value, the text backwards", () => {
+  test("no address in the HTML: a placeholder href, the scrambled value, a made-up address", () => {
     const contact = mailto(ADDRESS, { subject: "Hello" });
     const html = render(contact);
     expect(blankData(html)).toBe(`<a href="#" data-safe-contact="" aria-label="Email address, activate to show">` +
-      `<bdo dir="rtl" aria-hidden="true">${backwards(ADDRESS)}</bdo></a>`);
+      `<span aria-hidden="true">${decoy(contact)}</span></a>`);
     expect(decode(dataOf(html))).toEqual(contact);
     expect(html).not.toContain(ADDRESS);
+    expect(html).not.toContain(backwards(ADDRESS));
+    expect(html).not.toContain("example");
     expect(html).not.toContain("mailto:");
   });
 
   test("phone links get the phone hint, or your own", () => {
     expect(render(tel("+39 012 345 6789"))).toContain('aria-label="Phone number, activate to show"');
     expect(render(sms("+39 012"), { hint: "Numero di telefono" })).toContain('aria-label="Numero di telefono"');
-    expect(render(tel("+39 012 345 6789"))).toContain(">9876 543 210 93+</bdo>");
+    expect(render(tel("+39 012 345 6789"))).toMatch(/<span aria-hidden="true">\+0\d \d{3} \d{3} \d{4}<\/span>/);
+    expect(render(tel("+39 012 345 6789"))).not.toMatch(/345 ?6789|0123456789/);
   });
 
-  test("a label replaces the backwards text and the hint; everything is escaped", () => {
+  test("a label replaces the decoy and the hint; everything is escaped", () => {
     const html = render(mailto(ADDRESS), { label: `<b>"Email" us</b>`, className: `x" onclick="y` });
     expect(html).toContain(">&#60;b&#62;&#34;Email&#34; us&#60;/b&#62;</a>");
     expect(html).toMatch(/^<a class="x&#34; onclick=&#34;y" href="#"/);
     expect(html).not.toContain("aria-label");
-    expect(html).not.toContain("<bdo");
+    expect(html).not.toContain("<span");
   });
 });

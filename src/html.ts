@@ -1,7 +1,7 @@
 // A hidden link as an HTML string, for servers, static-site builds, templates
 // and the CLI. The browser side is dom.ts (or the drop-in auto.js).
 
-import { encode, hiddenAttributes, reverse, type Contact } from "./contact.js";
+import { decoy, encode, hiddenAttributes, type Contact } from "./contact.js";
 
 export interface RenderOptions {
   /** Text to show instead of the address, e.g. "Email us". Escaped. */
@@ -15,9 +15,8 @@ export interface RenderOptions {
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * The HTML of a hidden link: `render(mailto("hello@example.com"))`. The
- * address is written backwards inside <bdo dir="rtl">, which draws it the right
- * way round.
+ * The HTML of a hidden link: `render(mailto("hello@example.com"))`. In place
+ * of the address it shows a made-up one (see decoy()) until the reveal.
  */
 export function render(contact: Contact, { label, hint, className }: RenderOptions = {}): string {
   const attributes = { class: className || undefined, ...hiddenAttributes(contact, encode(contact), { hint, labelled: label !== undefined }) };
@@ -25,7 +24,7 @@ export function render(contact: Contact, { label, hint, className }: RenderOptio
     .flatMap(([name, value]) => (value === undefined ? [] : [`${name}="${escapeHtml(value)}"`]))
     .join(" ");
   const shown = label === undefined
-    ? `<bdo dir="rtl" aria-hidden="true">${escapeHtml(reverse(contact.text))}</bdo>`
+    ? `<span aria-hidden="true">${escapeHtml(decoy(contact))}</span>`
     : escapeHtml(label);
   return `<a ${html}>${shown}</a>`;
 }
