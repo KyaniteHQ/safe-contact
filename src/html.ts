@@ -16,7 +16,8 @@ const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.char
 
 /**
  * The HTML of a hidden link: `render(mailto("hello@example.com"))`. In place
- * of the address it shows a made-up one (see decoy()) until the reveal.
+ * of the address it holds a made-up one (see decoy()); the browser script
+ * draws the real one for people.
  */
 export function render(contact: Contact, { label, hint, className }: RenderOptions = {}): string {
   const attributes = { class: className || undefined, ...hiddenAttributes(contact, encode(contact), { hint, labelled: label !== undefined }) };

@@ -78,20 +78,21 @@ export function decode(data: string): Contact | null {
 }
 
 /** Reverses a string by code point, so emoji and accents survive. */
-function reverse(text: string): string {
+export function reverse(text: string): string {
   return Array.from(text).reverse().join("");
 }
 
 /**
- * What the page shows in place of the contact until the reveal: a made-up
- * address or number that reads like one but cannot be delivered. A harvester
- * that takes it gets junk. For an email it is a random user name (one or two
- * parts, sometimes digits), a random domain and a made-up top-level domain; for
- * a phone number, random digits after "+0", a country code that does not exist.
+ * What the HTML holds in place of the contact: a made-up address or number
+ * that reads like one but cannot be delivered. A harvester that reads the HTML
+ * gets junk. For an email it is a random user name (one or two parts, sometimes
+ * digits), a random domain and a made-up top-level domain; for a phone number,
+ * random digits after "+0", a country code that does not exist. People never
+ * see it: the script draws the real contact in its place as soon as it runs.
  *
  * It is derived from the contact, so the same contact always gets the same
  * decoy: server and client render alike, and builds are reproducible. It has
- * the length of the real text, so nothing moves when the link is revealed.
+ * the length of the real text, so nothing moves when it is drawn or revealed.
  */
 export function decoy({ text, href }: Contact): string {
   const next = random(seed(`${text}\n${href}`));
