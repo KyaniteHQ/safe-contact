@@ -8,7 +8,7 @@
 import { encode, mailto, sms, tel, type Contact, type MailtoFields } from "./contact.js";
 import { SafeContact, type SafeContactProps } from "./safe-contact.js";
 
-/** Every <a> prop except href, plus `hint` and `children` (a label shown instead of the address). */
+/** Every <a> prop except href, plus `hint`, `placeholderHref` and `children` (a label shown instead of the address). */
 export type LinkProps = Omit<SafeContactProps, "data">;
 
 export type EmailProps = MailtoFields & LinkProps & { address: string };

@@ -43,7 +43,9 @@ test("HTML built by your code", () => {
     render(mailto("you@yoursite.com", { subject: "Hello" }), { label: "Email us" }),
     render(tel("+1 555 0100")),
     render(sms("+1 555 0100", "Hi!")),
+    render(mailto("you@yoursite.com"), { label: "Email us", placeholderHref: "#email-note" }),
   ];
   const hrefs = links.map((html) => decode(dataOf(html))?.href);
-  expect(hrefs).toEqual(["mailto:you@yoursite.com", "mailto:you@yoursite.com?subject=Hello", "tel:+15550100", "sms:+15550100?body=Hi!"]);
+  expect(hrefs).toEqual(["mailto:you@yoursite.com", "mailto:you@yoursite.com?subject=Hello", "tel:+15550100", "sms:+15550100?body=Hi!", "mailto:you@yoursite.com"]);
+  expect(links.at(-1)).toMatch(/^<a href="#email-note" /);
 });

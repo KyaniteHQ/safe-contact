@@ -25,6 +25,7 @@ test("--data prints only the scrambled value", () => {
 
 test("bad input: a message and a non-zero exit", () => {
   expect(cli("nope")).toMatchObject({ status: 1, stderr: 'safe-contact: not a phone number: "nope"\n' });
+  expect(cli("a@b.co", "--placeholder-href", "/x")).toMatchObject({ status: 1, stderr: 'safe-contact: placeholderHref must be an in-page link that starts with "#": "/x"\n' });
   expect(cli().status).toBe(2);
   expect(cli("--help")).toMatchObject({ status: 0 });
 });

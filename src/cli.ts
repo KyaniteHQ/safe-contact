@@ -3,6 +3,7 @@
 // npx safe-contact "+39 012 345 6789"  → the same for a phone number
 
 import { parseArgs } from "node:util";
+import { inPageHref } from "./contact.js";
 import { encode, mailto, render, sms, tel } from "./index.js";
 
 const HELP = `Usage: npx safe-contact <email or phone number> [options]
@@ -19,6 +20,8 @@ Options:
   --sms             open the messaging app instead of calling
   --hint <text>     what screen readers hear before the link is revealed
   --class <names>   class names for the link
+  --placeholder-href <#id>
+                    where the link points before the reveal; quote it: "#email-note"
   --data            print only the scrambled value, for React's <SafeContact data="...">
   -h, --help        show this help`;
 
@@ -31,6 +34,7 @@ function main(argv: string[]): number {
       options: {
         label: { type: "string" }, subject: { type: "string" }, body: { type: "string" },
         sms: { type: "boolean" }, hint: { type: "string" }, class: { type: "string" },
+        "placeholder-href": { type: "string" },
         data: { type: "boolean" }, help: { type: "boolean", short: "h" },
       },
     });
@@ -52,7 +56,10 @@ function main(argv: string[]): number {
     const contact = target.includes("@") ? mailto(target, { subject: o.subject, body: o.body })
       : o.sms ? sms(target, o.body)
       : tel(target);
-    console.log(o.data ? encode(contact) : render(contact, { label: o.label, hint: o.hint, className: o.class }));
+    console.log(o.data ? encode(contact) : render(contact, {
+      label: o.label, hint: o.hint, className: o.class,
+      placeholderHref: o["placeholder-href"] === undefined ? undefined : inPageHref(o["placeholder-href"]),
+    }));
     return 0;
   } catch (error) {
     console.error((error as Error).message);
