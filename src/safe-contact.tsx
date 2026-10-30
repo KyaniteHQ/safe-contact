@@ -21,6 +21,8 @@ export interface SafeContactProps extends Omit<AnchorHTMLAttributes<HTMLAnchorEl
   children?: ReactNode;
   /** What screen readers hear before the link is revealed. */
   hint?: string;
+  /** Where the link points before the reveal, such as "#email-note". Defaults to "#". */
+  placeholderHref?: string;
 }
 
 function chain<E extends SyntheticEvent>(theirs: ((event: E) => void) | undefined, ours: () => void) {
@@ -30,7 +32,7 @@ function chain<E extends SyntheticEvent>(theirs: ((event: E) => void) | undefine
   };
 }
 
-export function SafeContact({ data, children, hint, onPointerEnter, onPointerDown, onFocus, onClick, ...rest }: SafeContactProps) {
+export function SafeContact({ data, children, hint, placeholderHref, onPointerEnter, onPointerDown, onFocus, onClick, ...rest }: SafeContactProps) {
   const [shown, setShown] = useState(false);
   const [drawn, setDrawn] = useState(false);
   useOnScreen(() => setDrawn(true), []);
@@ -39,7 +41,7 @@ export function SafeContact({ data, children, hint, onPointerEnter, onPointerDow
   const show = () => setShown(true);
   return (
     <a {...rest}
-      {...(shown ? { href: contact.href } : hiddenAttributes(contact, "", { hint, labelled: children != null }))}
+      {...(shown ? { href: contact.href } : hiddenAttributes(contact, "", { hint, labelled: children != null, placeholderHref }))}
       onPointerEnter={chain(onPointerEnter, show)}
       onPointerDown={chain(onPointerDown, show)}
       onFocus={chain(onFocus, show)}

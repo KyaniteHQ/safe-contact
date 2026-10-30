@@ -10,6 +10,12 @@ export interface RenderOptions {
   hint?: string;
   /** Class names for the <a>. */
   className?: string;
+  /**
+   * Where the link points before the reveal: an in-page link such as
+   * "#email-note", so a click without JavaScript lands on a note that says
+   * why there is no address. Defaults to "#".
+   */
+  placeholderHref?: string;
 }
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -19,8 +25,8 @@ const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.char
  * of the address it holds a made-up one (see decoy()); the browser script
  * draws the real one for people.
  */
-export function render(contact: Contact, { label, hint, className }: RenderOptions = {}): string {
-  const attributes = { class: className || undefined, ...hiddenAttributes(contact, encode(contact), { hint, labelled: label !== undefined }) };
+export function render(contact: Contact, { label, hint, className, placeholderHref }: RenderOptions = {}): string {
+  const attributes = { class: className || undefined, ...hiddenAttributes(contact, encode(contact), { hint, labelled: label !== undefined, placeholderHref }) };
   const html = Object.entries(attributes)
     .flatMap(([name, value]) => (value === undefined ? [] : [`${name}="${escapeHtml(value)}"`]))
     .join(" ");

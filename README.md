@@ -114,9 +114,12 @@ render(mailto("you@yoursite.com"));
 render(mailto("you@yoursite.com", { subject: "Hello" }), { label: "Email us" });
 render(tel("+1 555 0100"));
 render(sms("+1 555 0100", "Hi!"));
+render(mailto("you@yoursite.com"), { label: "Email us", placeholderHref: "#email-note" });
 ```
 
 Insert the string as raw HTML (it is already escaped), and load the browser part once per page: the script tag above, or `import "safe-contact/auto";` in your client bundle.
+
+Before the reveal the link points at `#`. Give `placeholderHref` an in-page link instead, such as a note that tells visitors without JavaScript why there is no address, and a click lands there. It must start with `#`; anything else throws a `TypeError`. React's components take the same `placeholderHref` prop.
 
 ## Rules that keep the address hidden
 
@@ -124,7 +127,7 @@ These matter more than which setup you pick. They are the usual mistakes:
 
 1. **Write the plain address only in server-side code.** Not in a `"use client"` file, not in props that are sent to the browser, not in `getStaticProps` or loader data, not in client-side environment variables.
 2. **Don't leave it anywhere else on the page.** Check the `<title>`, meta tags, JSON-LD (`"email": …`), `alt` text, footer, and `mailto:` links elsewhere. One plain copy defeats the rest.
-3. **Load the browser part once per page when you use `render()` or the CLI.** Without it people see the decoy, and clicking only jumps to the top of the page. React components need no script.
+3. **Load the browser part once per page when you use `render()` or the CLI.** Without it people see the decoy, and clicking only jumps to the top of the page, or to the `placeholderHref` you set. React components need no script.
 4. **In React, use the components, not the printed HTML.** `<SafeContact data>` gives the same result and handles the reveal inside React.
 
 ## How it works
@@ -168,7 +171,7 @@ mailto(address: string, fields?: { subject?, body?, cc?, bcc? }): Contact   // t
 tel(number: string): Contact                                              // throws TypeError if under 3 digits
 sms(number: string, body?: string): Contact
 
-render(contact: Contact, options?: { label?: string; hint?: string; className?: string }): string
+render(contact: Contact, options?: { label?: string; hint?: string; className?: string; placeholderHref?: string }): string
 encode(contact: Contact): string             // the value for <SafeContact data> and data-safe-contact
 decode(data: string): Contact | null         // null unless it is a mailto:, tel: or sms: contact
 
@@ -194,6 +197,8 @@ npx safe-contact <email or phone number> [options]
   --sms             a text-message link instead of a call link (phone numbers only)
   --hint <text>     what screen readers hear before the reveal
   --class <names>   class names for the link
+  --placeholder-href <#id>
+                    where the link points before the reveal, e.g. "#email-note"
   --data            print only the scrambled value, for <SafeContact data>
 ```
 
