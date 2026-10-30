@@ -1,7 +1,7 @@
 // A hidden link as an HTML string, for servers, static-site builds, templates
 // and the CLI. The browser side is dom.ts (or the drop-in auto.js).
 
-import { decoy, encode, hiddenAttributes, type Contact } from "./contact.js";
+import { decoy, encode, hiddenAttributes, type Contact, type InPageHref } from "./contact.js";
 
 export interface RenderOptions {
   /** Text to show instead of the address, e.g. "Email us". Escaped. */
@@ -15,7 +15,7 @@ export interface RenderOptions {
    * "#email-note", so a click without JavaScript lands on a note that says
    * why there is no address. Defaults to "#".
    */
-  placeholderHref?: string;
+  placeholderHref?: InPageHref;
 }
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);

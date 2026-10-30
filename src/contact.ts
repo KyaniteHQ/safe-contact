@@ -171,22 +171,29 @@ function random(state: number): Next {
   };
 }
 
+/** A link to a spot on the same page, such as "#email-note". */
+export type InPageHref = `#${string}`;
+
+const isInPage = (href: string): href is InPageHref => href.startsWith("#");
+
+export function inPageHref(href: string): InPageHref {
+  if (!isInPage(href)) throw new TypeError(`safe-contact: placeholderHref must be an in-page link that starts with "#": ${JSON.stringify(href)}`);
+  return href;
+}
+
 /**
  * The attributes of a link before its reveal, in order: a placeholder href, so
  * browsers and site CSS treat it as a link; the scrambled contact; and, unless
  * a label shows instead of the address, what screen readers hear. `data` is
  * encode(contact) for render(), or "" for React, which reveals the link itself:
  * the empty value still marks the link for CSS but gives the browser script
- * nothing to act on. The placeholder is "#" unless `placeholderHref` names
- * another in-page link; anything that does not start with "#" throws a
- * TypeError, so the placeholder can never leave the page.
+ * nothing to act on.
  */
 export function hiddenAttributes(
   contact: Contact,
   data: string,
-  { hint, labelled, placeholderHref = "#" }: { hint?: string; labelled: boolean; placeholderHref?: string },
+  { hint, labelled, placeholderHref = "#" }: { hint?: string; labelled: boolean; placeholderHref?: InPageHref },
 ) {
-  if (!placeholderHref.startsWith("#")) throw new TypeError(`safe-contact: placeholderHref must be an in-page link that starts with "#": ${JSON.stringify(placeholderHref)}`);
   const defaultHint = contact.href.startsWith("mailto:") ? "Email address, activate to show" : "Phone number, activate to show";
-  return { href: placeholderHref, [ATTRIBUTE]: data, "aria-label": labelled ? undefined : hint ?? defaultHint };
+  return { href: inPageHref(placeholderHref), [ATTRIBUTE]: data, "aria-label": labelled ? undefined : hint ?? defaultHint };
 }

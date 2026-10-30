@@ -9,7 +9,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useState, type AnchorHTMLAttributes, type ReactNode, type SyntheticEvent } from "react";
 import { flushSync } from "react-dom";
-import { decode, decoy, hiddenAttributes, reverse } from "./contact.js";
+import { decode, decoy, hiddenAttributes, reverse, type InPageHref } from "./contact.js";
 
 // Before the first paint in the browser; a no-op on the server, without the warning.
 const useOnScreen = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -22,7 +22,7 @@ export interface SafeContactProps extends Omit<AnchorHTMLAttributes<HTMLAnchorEl
   /** What screen readers hear before the link is revealed. */
   hint?: string;
   /** Where the link points before the reveal, such as "#email-note". Defaults to "#". */
-  placeholderHref?: string;
+  placeholderHref?: InPageHref;
 }
 
 function chain<E extends SyntheticEvent>(theirs: ((event: E) => void) | undefined, ours: () => void) {

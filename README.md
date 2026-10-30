@@ -93,6 +93,7 @@ Print the HTML for your link:
 ```sh
 npx safe-contact you@yoursite.com
 npx safe-contact you@yoursite.com --label "Email us" --subject "Hello"
+npx safe-contact you@yoursite.com --label "Email us" --placeholder-href "#email-note"
 npx safe-contact "+1 555 0100"
 npx safe-contact "+1 555 0100" --sms --body "Hi!"
 ```
@@ -134,7 +135,7 @@ These matter more than which setup you pick. They are the usual mistakes:
 
 1. The HTML holds a decoy in place of the address: a made-up user name, domain and top-level domain (`uho@puweher.mifi`) that reads like an address but cannot be delivered. For a phone number it is random digits after `+0`, a country code that does not exist. A bot that harvests the HTML gets junk.
 2. As soon as the page is on screen, the script draws the real address for people: written backwards inside `<bdo dir="rtl">`, which the browser displays the right way round. People read it normally; the page text is still backwards, so a bot that runs the page and pattern-matches its text finds no address either.
-3. The real link is scrambled in the `data-safe-contact` attribute (the address and link, reversed, then base64). The `href` is `#`, so there's no `mailto:` link to find, yet browsers and your CSS treat it as a normal link.
+3. The real link is scrambled in the `data-safe-contact` attribute (the address and link, reversed, then base64). The `href` is `#` (or your `placeholderHref`), so there's no `mailto:` link to find, yet browsers and your CSS treat it as a normal link.
 4. When someone hovers, focuses, taps or clicks, it becomes a real `mailto:`, `tel:` or `sms:` link just before the click lands. Copying the text copies the real address.
 
 The decoy is derived from the address, so the same address always gets the same decoy (server and client render alike, builds stay reproducible), and it is as long as the real text, so nothing moves when the real one is drawn.
@@ -143,7 +144,7 @@ The decoy is derived from the address, so the same address always gets the same 
 
 **Styling.** Hidden and revealed links are both `<a href>`, so your link styles apply to both. Target hidden ones with `a[data-safe-contact]`.
 
-**Without JavaScript** the decoy stays on screen, and clicking it only jumps to the top of the page.
+**Without JavaScript** the decoy stays on screen, and clicking it only jumps to the top of the page, or to your `placeholderHref`.
 
 **Limits.** No trick stops a bot built to beat it. Most harvesters read raw HTML, and take home the decoy; some run the page in a headless browser, and find only backwards text; very few hover over every link. This stops all but the last kind. It hides addresses from harvesters. It does not filter spam or hide an address that is already public elsewhere.
 
@@ -160,6 +161,7 @@ The decoy is derived from the address, so the same address always gets the same 
 LinkProps = every <a> prop except href, plus:
   children?: ReactNode   // shown instead of the address, e.g. "Email us"
   hint?: string          // what screen readers hear before the reveal
+  placeholderHref?: `#${string}`  // where the link points before the reveal, e.g. "#email-note"
 ```
 
 `<Email>`, `<Phone>` and `<Sms>` throw a `TypeError` for an invalid address or number. `<SafeContact>` throws one for a `data` value that did not come from `encode()`.
@@ -171,7 +173,7 @@ mailto(address: string, fields?: { subject?, body?, cc?, bcc? }): Contact   // t
 tel(number: string): Contact                                              // throws TypeError if under 3 digits
 sms(number: string, body?: string): Contact
 
-render(contact: Contact, options?: { label?: string; hint?: string; className?: string; placeholderHref?: string }): string
+render(contact: Contact, options?: { label?: string; hint?: string; className?: string; placeholderHref?: `#${string}` }): string
 encode(contact: Contact): string             // the value for <SafeContact data> and data-safe-contact
 decode(data: string): Contact | null         // null unless it is a mailto:, tel: or sms: contact
 
@@ -198,7 +200,7 @@ npx safe-contact <email or phone number> [options]
   --hint <text>     what screen readers hear before the reveal
   --class <names>   class names for the link
   --placeholder-href <#id>
-                    where the link points before the reveal, e.g. "#email-note"
+                    where the link points before the reveal; quote it: "#email-note"
   --data            print only the scrambled value, for <SafeContact data>
 ```
 
